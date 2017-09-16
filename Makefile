@@ -8,7 +8,7 @@ all: $(PROG)
 install: $(PROG)
 	install $(PROG) $(HOME)/bin/
 
-LIBS= -lssl
+LIBS= -lcrypto -lboost_iostreams -lz
 
 init-db: init-db.o
 

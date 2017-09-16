@@ -139,9 +139,9 @@ static int add_file_to_cache(char *path)
 	memset(ce, 0, size);
 	memcpy(ce->name, path, namelen);
 	ce->ctime.sec = st.st_ctime;
-	ce->ctime.nsec = st.st_ctim.tv_nsec;
+	ce->ctime.nsec = st.st_ctimespec.tv_nsec;
 	ce->mtime.sec = st.st_mtime;
-	ce->mtime.nsec = st.st_mtim.tv_nsec;
+	ce->mtime.nsec = st.st_mtimespec.tv_nsec;
 	ce->st_dev = st.st_dev;
 	ce->st_ino = st.st_ino;
 	ce->st_mode = st.st_mode;

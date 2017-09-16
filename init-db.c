@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	if (sha1_dir) {
 		struct stat st;
 		if (!stat(sha1_dir, &st) < 0 && S_ISDIR(st.st_mode))
-			return;
+			return 1;
 		fprintf(stderr, "DB_ENVIRONMENT set to bad directory %s: ", sha1_dir);
 	}
 
