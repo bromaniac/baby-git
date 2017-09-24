@@ -3,6 +3,13 @@
  *
  *  Copyright (C) Linus Torvalds, 2005
  *
+ *  The purpose of this file is to be compiled into an executable
+ *  called `init-db`. When `init-db` is run from the command line
+ *  it will initialize a Git repository by creating the object
+ *  store (a directory called `.dircache/objects` by default)
+ *  which will store the content that users commit in order to
+ *  track the history of the repository over time.
+ *
  *  This whole file (i.e. everything in the main function) will run
  *  when ./init-db executable is run from the command line.
  */
@@ -11,7 +18,7 @@
 /*	The above 'include' allows use of the following functions and
 	variables from <cache.h> header file, ranked in order of first use
 	in this file. Most are functions/macros from standard C libraries
-    that are `#included` in <cache.h>. Function names followed by
+    that are `#included` in <cache.h>. Function names are followed by
     parenthesis whereas variable/struct names are not:
 
     -getenv(name): Get value of the environment variable `name`.
