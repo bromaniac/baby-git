@@ -31,7 +31,7 @@
                      <read-cache.c>.
 
 	-usage(): Print a read-cache error to the screen. Sourced from
-			  <cache.h> and defined <read-cache.c>.
+			  <cache.h> and defined in <read-cache.c>.
 
 	-read_sha1_file(): Read-in the contents of the file identified by
 					   the SHA1 passed in as a command line argument
@@ -39,6 +39,7 @@
 
 	-mkstemp(template): Use a `template` filename to create a file
 						descriptor to a newly opened file for writing.
+						Sourced from <stdlib.h>.
 
 	-write(fd, buf, n): Write `n` bytes from buffer `buf` to file
 						described by file descriptor `fd`.
@@ -47,6 +48,7 @@
 						 allocated for str1.
 
 	-printf(message): Print message to standard output stdout.
+					  Sourced from <stdio.h>.
 
 	****************************************************************
 
