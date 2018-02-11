@@ -188,7 +188,7 @@
 
     -read_sha1_file(): TODO
 
-    -write_sha1_file(): Compress file content stored in `buf`, hash compressed output, and write to object store.
+    -write_sha1_file(buf, len): Compress file content stored in `buf`, hash compressed output, and write to object store.
 
     -write_sha1_buffer(): Write compressed content to location in object store identified
                           by the content's SHA1 hash.

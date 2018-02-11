@@ -58,7 +58,6 @@
                              of object store.
 
     -strlen(string): Return the length of `string` in bytes.
-                     Sourced from <string.h>.
 
     -errno: Macro set by system calls to in the event of an error.
             Sourced from <errno.h>.
