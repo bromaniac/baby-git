@@ -7,9 +7,9 @@
  *  called `write-tree`. When `write-tree` is run from the command line
  *  it does not take any command line arguments.
  *
- *  The `write-tree` command is the original version of the `git commit`
- *  command. It takes the changes that have been staged in the index
- *  and creates a commit in the object store recording these changes.
+ *  The `write-tree` command takes the changes that have been staged in
+ *  the index and creates a tree object in the object store recording
+ *  these changes.
  *
  *  Everything in the main function in this file will run
  *  when ./write-tree executable is run from the command line.
@@ -127,11 +127,11 @@ static int prepend_integer(char *buffer, unsigned val, int i)
  */
 int main(int argc, char **argv)
 {
-	/* The size of the tree to write/commit to the object store. */
+	/* The size of the tree to write to the object store. */
 	unsigned long size;
 
     /* Declare an offset used to store the header of the tree. */
-	unsigned long offset
+	unsigned long offset;
 
     /* Not used. Even Linus Torvalds makes mistakes. */
 	unsigned long val;
@@ -150,14 +150,14 @@ int main(int argc, char **argv)
 
 	/*
 	 * If there are no active cache entries, throw an error message since there is
-	 * nothing staged in the index to commit.
+	 * nothing staged in the index to write.
 	 */
 	if (entries <= 0) {
 		fprintf(stderr, "No file-cache to create a tree of\n");
 		exit(1);
 	}
 
-	/* Guess at an initial size of the tree to commit. */
+	/* Guess at an initial size of the tree to write. */
 	size = entries * 40 + 400;
 
 	/* Allocate `size` bytes to store the tree's content. */
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	offset = ORIG_OFFSET;
 
     /*
-     * Iterate over each cache entry, adding the relevant into to the buffer
+     * Iterate over each cache entry, adding the relevant info to the buffer
      * representing the tree.
      */
 	for (i = 0; i < entries; i++) {
