@@ -53,7 +53,7 @@
 #include <zlib.h> /* Include compression tools from zlib library. */
 
 /*
- * Basic data structures for the directory cache.
+ * Linus Torvalds: Basic data structures for the directory cache.
  *
  * Linus Torvalds: NOTE NOTE NOTE! This is all in the native CPU byte format. It's
  * not even trying to be portable. It's trying to be efficient. It's
@@ -139,13 +139,13 @@ unsigned int active_alloc; /* The result of calling `alloc_nr()` macro with `act
 /* Reads the contents of the `.dircache/index` file into the `active_cache` array. */
 extern int read_cache(void);
 
-/* Return a statically allocated filename matching the SHA1 signature */
+/* Linus Torvalds: Return a statically allocated filename matching the SHA1 signature */
 extern char *sha1_file_name(unsigned char *sha1);
 
-/* Write a memory buffer out to the SHA1 file. */
+/* Linus Torvalds: Write a memory buffer out to the SHA1 file. */
 extern int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size);
 
-/* Read and unpack a SHA1 file into memory, write memory to a SHA1 file. */
+/* Linus Torvalds: Read and unpack a SHA1 file into memory, write memory to a SHA1 file. */
 extern void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size);
 extern int write_sha1_file(char *buf, unsigned len);
 
