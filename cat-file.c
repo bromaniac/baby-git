@@ -101,7 +101,14 @@
 
 */
 
-/* Standard `main` function definition. */
+/*
+ * Function: `main`
+ * Parameters:
+ *      -argc: The number of command-line arguments supplied, inluding the command itself.
+ *      -argv: An array of the command line arguments, including the command itself.
+ * Purpose: Standard `main` function definition. Runs when the executable `commit-tree` is
+ *          run from the command line.
+ */
 int main(int argc, char **argv)
 {
     /*

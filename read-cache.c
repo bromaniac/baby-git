@@ -302,10 +302,12 @@ char * sha1_to_hex(unsigned char *sha1)
 }
 
 /*
- * NOTE! This returns a statically allocated buffer, so you have to be
+ * Linus Torvalds: NOTE! This returns a statically allocated buffer, so you have to be
  * careful about using it. Do a "strdup()" if you need to save the
  * filename.
- *
+ */
+
+/*
  * Function: `sha1_file_name`
  * Parameters:
  *      -sha1: The SHA1 used to identify the file in the object store.
@@ -374,15 +376,15 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 		return NULL;
 	}
 
-    /* Set up memory location to store the contents of the file to be added to cache. */
-    map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    close(fd); /* Release the file descriptor for future use. */
+  /* Set up memory location to store the contents of the file to be added to cache. */
+  map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  close(fd); /* Release the file descriptor for future use. */
 	if (-1 == (int)(long)map) /* Return NULL (failure) if mmap failed. */
 		return NULL;
 
-	/*  
+    /*  
      * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.
-    */
+     */
     memset(&stream, 0, sizeof(stream));
 	stream.next_in = map; /* Set mmap'ed location as the first addition to the compression stream. */
 	stream.avail_in = st.st_size; /* Allow size of object store file to be added to the stream. */
@@ -407,7 +409,7 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 		stream.next_out = buf + bytes;
 		stream.avail_out = *size - bytes;
 		while (inflate(&stream, Z_FINISH) == Z_OK)
-			/* nothing */;
+			/* Linus Torvalds: nothing */;
 	}
 	inflateEnd(&stream);
 	return buf;
@@ -428,7 +430,7 @@ int write_sha1_file(char *buf, unsigned len)
 	unsigned char sha1[20]; /* Used to store SHA1 hash. */
 	SHA_CTX c; /* Declare SHA context. */
 
-	/*
+    /*
      * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.
      */
 	memset(&stream, 0, sizeof(stream));
@@ -444,7 +446,7 @@ int write_sha1_file(char *buf, unsigned len)
 	stream.avail_out = size; /* Use the upper bound calculated above as max compression output. */
 
 	while (deflate(&stream, Z_FINISH) == Z_OK) /* Compress the file content. */
-		/* nothing */;
+	/* Linus Torvalds: nothing */;
 	deflateEnd(&stream); /* Free memory structures that were dynamically allocated for compression. */
 	size = stream.total_out; /* Get size of total output of compression stream. */
 

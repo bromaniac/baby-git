@@ -365,13 +365,13 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	stream.next_out = out; /* Set `out` as the next location to write compressed output. */
 	stream.avail_out = max_out_bytes; /* Set the maximum # of bytes to output. */
 	while (deflate(&stream, 0) == Z_OK) /* Compress the data, which so far is just the file metadata. */
-		/* nothing */;
+		/* Linus Torvalds: nothing */;
 
 	/* Add the file content to the compression stream. */
     stream.next_in = in;
 	stream.avail_in = st->st_size;
 	while (deflate(&stream, Z_FINISH) == Z_OK) /* Compress the file content. */
-		/*nothing */;
+		/* Linus Torvalds: nothing */;
 
 	deflateEnd(&stream); /* Free memory structures that were dynamically allocated for compression. */
 	
@@ -492,7 +492,7 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
 }		
 
 /*
- * We fundamentally don't like some paths: we don't want
+ * Linus Torvalds: We fundamentally don't like some paths: we don't want
  * dot or dot-dot anywhere, and in fact, we don't even want
  * any other dot-files (.dircache or anything else). They
  * are hidden, for chist sake.
@@ -519,6 +519,14 @@ inside:
 	}
 }
 
+/*
+ * Function: `main`
+ * Parameters:
+ *      -argc: The number of command-line arguments supplied, inluding the command itself.
+ *      -argv: An array of the command line arguments, including the command itself.
+ * Purpose: Standard `main` function definition. Runs when the executable `commit-tree` is
+ *          run from the command line.
+ */
 int main(int argc, char **argv)
 {
 	int i; /* Iterator for `for` loop below. */
@@ -553,7 +561,7 @@ int main(int argc, char **argv)
      * ./update-cache filename1 filename2 ...
      */
 	for (i = 1 ; i < argc; i++) {
-		char *path = argv[i]; /* Store the ith filename passed in as command line argument.  */
+		char *path = argv[i]; /* Store the ith filename passed in as command line argument. */
 
         /* Verify each path/filename that was passed in. Ignore the invalid ones. */
 		if (!verify_path(path)) {

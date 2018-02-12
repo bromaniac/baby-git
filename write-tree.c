@@ -133,7 +133,7 @@ static int prepend_integer(char *buffer, unsigned val, int i)
 	return i;
 }
 
-/* Enough space to add the header of "tree <size>\0" */
+/* Linus Torvalds: Enough space to add the header of "tree <size>\0" */
 #define ORIG_OFFSET (40)
 
 /*
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Guess at an initial size of the tree to write. */
+	/* Linus Torvalds: Guess at an initial size of the tree to write. */
 	size = entries * 40 + 400;
 
 	/* Allocate `size` bytes to store the tree's content. */

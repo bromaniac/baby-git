@@ -294,7 +294,7 @@ static void remove_special(char *p)
 }
 
 /*
- * Having more than two parents may be strange, but hey, there's
+ * Linus Torvalds: Having more than two parents may be strange, but hey, there's
  * no conceptual reason why the file format couldn't accept multi-way
  * merges. It might be the "union" of several packages, for example.
  *
@@ -400,7 +400,7 @@ int main(int argc, char **argv)
      * For each passed-in parent commit SHA1 hash, add the static text
      * 'parent' and the parent commit SHA1 hash to the buffer.
      *
-	 * NOTE! This ordering means that the same exact tree merged with a
+	 * Linus Torvalds: NOTE! This ordering means that the same exact tree merged with a
 	 * different order of parents will be a _different_ changeset even
 	 * if everything else stays the same.
 	 */

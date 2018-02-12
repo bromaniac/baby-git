@@ -53,15 +53,15 @@
 #include <zlib.h> /* Include compression tools from zlib library. */
 
 /*
- * Basic data structures for the directory cache
+ * Basic data structures for the directory cache.
  *
- * NOTE NOTE NOTE! This is all in the native CPU byte format. It's
+ * Linus Torvalds: NOTE NOTE NOTE! This is all in the native CPU byte format. It's
  * not even trying to be portable. It's trying to be efficient. It's
  * just a cache, after all.
  */
 
 /* This `CACHE_SIGNATURE` is hardcoded to be loaded into all cache_headers. */
-#define CACHE_SIGNATURE 0x44495243	/* "DIRC" */
+#define CACHE_SIGNATURE 0x44495243	/* Linus Torvalds: "DIRC" */
 
 /* Represents a header structure to identify a set of cache_entries. */
 struct cache_header {
@@ -149,11 +149,11 @@ extern int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size);
 extern void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size);
 extern int write_sha1_file(char *buf, unsigned len);
 
-/* Convert to/from hex/sha1 representation. */
+/* Linus Torvalds: Convert to/from hex/sha1 representation. */
 extern int get_sha1_hex(char *hex, unsigned char *sha1);
-extern char *sha1_to_hex(unsigned char *sha1);	/* static buffer! */
+extern char *sha1_to_hex(unsigned char *sha1);	/* Linus Torvalds: static buffer! */
 
 /* Print usage message to the command line. */
 extern void usage(const char *err);
 
-#endif /* CACHE_H */
+#endif /* Linus Torvalds: CACHE_H */
