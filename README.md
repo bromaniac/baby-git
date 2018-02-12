@@ -36,8 +36,7 @@ about a tool that has helped shape software development today. It amazed me how 
 ~1000 lines of code in this initial release have accomplished so much, and I hope
 it will amaze you too!
 
-Jacob Stopak
-AnalytixBar LLC
+Jacob Stopak, AnalytixBar LLC
 
 PS: Cheers to Linus Torvalds and Junio Hamano, Git is a dank tool.
 
