@@ -298,7 +298,7 @@ static void remove_special(char *p)
  * no conceptual reason why the file format couldn't accept multi-way
  * merges. It might be the "union" of several packages, for example.
  *
- * I don't really expect that to happen, but this is here to make
+ * Linus Torvalds: I don't really expect that to happen, but this is here to make
  * it clear that _conceptually_ it's ok..
  */
 #define MAXPARENT (16)
