@@ -3,10 +3,6 @@
 #
 #      Copyright 2018, AnalytixBar LLC, Jacob Stopak
 #
-#  All code & explicitly labelled documentation (comments):
-#      
-#      Copyright 2005, Linus Torvalds
-#
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
@@ -22,10 +18,10 @@
 #
 #**************************************************************************
 #
-# This is the original Makefile for git.
+#  This is the original Makefile for git.
 #
-# It is used to invoke the gcc C compiler to build binary executable
-# files for each of the original 7 git commands:
+#  It is used to invoke the gcc C compiler to build binary executable
+#  files for each of the original 7 git commands:
 #
 #   1) init-db
 #   2) update-cache
@@ -35,16 +31,16 @@
 #   6) read-tree
 #   7) commit-tree
 #
-# This Makefile can be invoked in 3 variations, by running the 3 following
-# commands from the command line inside the same directory as the Makefile:
+#  This Makefile can be invoked in 3 variations, by running the 3 following
+#  commands from the command line inside the same directory as the Makefile:
 #
-# 1) `make clean`: This removes all previously built executables and build
-#    files, from the working directory.
+#  1) `make clean`: This removes all previously built executables and build
+#     files, from the working directory.
 #
-# 2) `make backup`: This first runs `make clean` and then backs up the
-#    current directory into a tar archive.
+#  2) `make backup`: This first runs `make clean` and then backs up the
+#     current directory into a tar archive.
 #
-# 3) `make`: The builds the codebase and creates the 7 git executables.
+#  3) `make`: The builds the codebase and creates the 7 git executables.
 #
 
 CFLAGS=-g # The `-g` compiler flag tells gcc to generate source-level debug information.
