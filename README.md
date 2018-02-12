@@ -1,5 +1,6 @@
 
-	Baby-GIT - the baby stupid content tracker
+# Baby-GIT - the baby stupid content tracker
+============================================
 
 "Baby-git" can mean anything, depending on your mood.
 
@@ -36,8 +37,14 @@ about a tool that has helped shape software development today. It amazed me how 
 ~1000 lines of code in this initial release have accomplished so much, and I hope
 it will amaze you too!
 
+All code in this repository is attributed to Linus Torvalds, and copyrighted via
+the GNU General Public License version 2. All documentation and comments, except
+where otherwise noted inline, are the original work of myself, on behalf of
+AnalytixBar LLC, and are also copyrighted via the GNU General Public License
+version 2.
+
 Jacob Stopak, AnalytixBar LLC
 
-PS: Cheers to Linus Torvalds and Junio Hamano, Git is a dank tool.
+PS: Cheers to Linus Torvalds, Junio Hamano, and all other Git contributors. Git is a dank tool.
 
 PPS: Pull requests and community input/support are very welcome.
