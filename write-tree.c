@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Linus Torvalds: Guess at an initial size of the tree to write. */
+	/* Linus Torvalds: Guess at an initial size */
 	size = entries * 40 + 400;
 
 	/* Allocate `size` bytes to store the tree's content. */

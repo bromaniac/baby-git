@@ -299,7 +299,7 @@ static int add_cache_entry(struct cache_entry *ce)
 	int pos; /* The position of the cache_entry when compared to the active cache. */
 	pos = cache_name_pos(ce->name, ce->namelen);
 
-	/* If there is an existing match, just replace it. */
+	/* Linus Torvalds: existing match? Just replace it */
 	if (pos < 0) {
 		active_cache[-pos-1] = ce;
 		return 0;
@@ -356,7 +356,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
 	deflateInit(&stream, Z_BEST_COMPRESSION);
 
 	/*
-	 * ASCII size + nul byte
+	 * Linus Torvalds: ASCII size + nul byte
 	 */	
 	stream.next_in = metadata; /* Set file metadata as the first addition to the compression stream. */
 
@@ -497,7 +497,7 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
  * any other dot-files (.dircache or anything else). They
  * are hidden, for chist sake.
  *
- * Also, we don't want double slashes or slashes at the
+ * Linus Torvalds: Also, we don't want double slashes or slashes at the
  * end that can make pathnames ambiguous. 
  */
 static int verify_path(char *path)
