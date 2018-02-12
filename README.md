@@ -1,6 +1,5 @@
-
-# Baby-GIT - the baby stupid content tracker
-============================================
+Baby-GIT - the baby stupid content tracker
+==========================================
 
 "Baby-git" can mean anything, depending on your mood.
 
