@@ -1,2 +1,9 @@
 .DS_Store
 *.o
+cat-file
+commit-tree
+init-db
+read-tree
+show-diff
+update-cache
+write-tree
