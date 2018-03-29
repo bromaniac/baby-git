@@ -40,6 +40,7 @@
 #define CACHE_H /* Define the token `CACHE_H`. */
 
 #include <stdio.h> /* Standard C library defining input/output tools. */
+#include <string.h>
 #include <sys/stat.h> /* Standard C library defining `stat` tools. */
 #include <fcntl.h> /* Standard C library for working with files. */
 #include <stddef.h> /* Standard C library for type definitions. */
