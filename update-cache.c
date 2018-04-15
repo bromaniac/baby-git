@@ -421,12 +421,10 @@ static int add_file_to_cache(char *path)
 	memcpy(ce->name, path, namelen); /* Copy `path` into the cache_entry's `name` member. */
 
     /* Load the info returned by fstat() call into the cache_entry's members. */
-	ce->ctime.sec = STAT_TIME_SEC( st, st_ctim );
-	/* ce->ctime.nsec = st.st_ctimespec.tv_nsec; */
-        ce->ctime.nsec = STAT_TIME_NSEC( st, st_ctim );
-	ce->mtime.sec = STAT_TIME_SEC( st, st_mtim );
-	/* ce->mtime.nsec = st.st_mtimespec.tv_nsec; */
-        ce->mtime.nsec = STAT_TIME_NSEC( st, st_mtim );
+	ce->ctime.sec = STAT_TIME_SEC( &st, st_ctim );
+        ce->ctime.nsec = STAT_TIME_NSEC( &st, st_ctim );
+	ce->mtime.sec = STAT_TIME_SEC( &st, st_mtim );
+        ce->mtime.nsec = STAT_TIME_NSEC( &st, st_mtim );
 	ce->st_dev = st.st_dev;
 	ce->st_ino = st.st_ino;
 	ce->st_mode = st.st_mode;

@@ -319,13 +319,21 @@ int main(int argc, char **argv)
 	int parents = 0; /* The number of passed-in parent commits. */
 	unsigned char tree_sha1[20]; /* The SHA1 of the tree to be committed. */
 	unsigned char parent_sha1[MAXPARENT][20]; /* An array of passed-in parent commit SHA1 hashes. */
-	char *gecos, *realgecos;
+	char *gecos;
 	char *email, realemail[1000]; /* Used to store the user's email address. */
 	char *date, *realdate; /* Used to store the date. */
 	char comment[1000]; /* Used to store the commit message. */
 
     /* The `passwd` struct is used for storing user account information. */
 	struct passwd *pw;
+
+        #ifndef BGIT_WINDOWS
+            char *realgecos, *username;
+        #else
+            unsigned int uname_len = UNLEN + 1;
+            char realgecos[uname_len];
+            char username[uname_len];
+        #endif
 
 	time_t now; /* Used to store the time of the commit. */
 	char *buffer; /* Used to store and build up the content to be added to the new commit before it is written to the object store. */
@@ -354,6 +362,7 @@ int main(int argc, char **argv)
 	if (!parents)
 		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
 
+        #ifndef BGIT_WINDOWS
     /* Get a `passwd` struct object for the current user running this process. */
 	pw = getpwuid(getuid());
 
@@ -365,10 +374,19 @@ int main(int argc, char **argv)
 	realgecos = pw->pw_gecos;
 
     /* Get the length of the user's login id. */
-	len = strlen(pw->pw_name);
+        username = pw->pw_name;
+
+        #else
+
+        GetUserNameEx( NameDisplay, realgecos, uname_len );
+        GetUserName( username, uname_len );
+
+        #endif
+
+	len = strlen(username);
 
     /* Contruct an email address for the user. */
-	memcpy(realemail, pw->pw_name, len);
+	memcpy(realemail, username, len);
 	realemail[len] = '@';
 
     /* Get the hostname. */

@@ -72,15 +72,15 @@
 #define CACHE_SIGNATURE 0x44495243	/* Linus Torvalds: "DIRC" */
 
 #ifdef BGIT_UNIX
-    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## e )
-    #define STAT_TIME_NSEC( st, st_xtim ) ( st.st_xtim.tv_nsec )
+    #define STAT_TIME_SEC( st, st_xtim ) ( (st)->st_xtim ## e )
+    #define STAT_TIME_NSEC( st, st_xtim ) ( (st)->st_xtim.tv_nsec )
 
 #elif defined BGIT_DARWIN
-    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## espec.tv_sec )
-    #define STAT_TIME_NSEC( st, st_xtim ) ( st.st_xtim ## espec.tv_nsec )
+    #define STAT_TIME_SEC( st, st_xtim ) ( (st)->st_xtim ## espec.tv_sec )
+    #define STAT_TIME_NSEC( st, st_xtim ) ( (st)->st_xtim ## espec.tv_nsec )
 
 #elif defined BGIT_WINDOWS
-    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## e )
+    #define STAT_TIME_SEC( st, st_xtim ) ( (st)->st_xtim ## e )
     #define STAT_TIME_NSEC( st, st_xtim ) 0
 #endif
 

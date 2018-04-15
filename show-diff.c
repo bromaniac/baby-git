@@ -88,14 +88,6 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
 	unsigned int changed = 0;
 
     /* Compare each cached file parameter to those in working directory file, to determine whether files match.  */
-/*
-	if (ce->mtime.sec  != (unsigned int)st->st_mtimespec.tv_sec ||
-	    ce->mtime.nsec != (unsigned int)st->st_mtimespec.tv_nsec)
-		changed |= MTIME_CHANGED;
-	if (ce->ctime.sec  != (unsigned int)st->st_ctimespec.tv_sec ||
-	    ce->ctime.nsec != (unsigned int)st->st_ctimespec.tv_nsec)
-		changed |= CTIME_CHANGED;
-*/
         if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
             ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
                 changed |= MTIME_CHANGED;
