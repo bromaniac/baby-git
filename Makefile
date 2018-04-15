@@ -2,7 +2,7 @@
 #
 # Synopsis:
 #
-# For Linux distributions:
+# For Linux distributions and MSYS2:
 #
 # $ make
 # $ make install
@@ -25,14 +25,13 @@ LDLIBS  = -lcrypto -lz
 RCOBJ   = read-cache.o
 OBJS    = init-db.o update-cache.o write-tree.o commit-tree.o read-tree.o \
               cat-file.o show-diff.o 
-#PROGS   = init-db update-cache write-tree commit-tree read-tree \
-#              cat-file show-diff 
-PROGS  := $(subst .o,,$(OBJS))
-OBJS   += $(RCOBJ)
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D BGIT_WINDOWS
+    PROGS  := $(subst .o,.exe,$(OBJS))
+    RCOBJ   = read-cache.exe
 else
+    PROGS  := $(subst .o,,$(OBJS))
     SYSTEM := $(shell uname -s)
 
     ifeq ($(SYSTEM),Linux)
@@ -47,6 +46,8 @@ else
         endif
     endif
 endif
+
+OBJS   += $(RCOBJ)
 
 .PHONY : all install clean backup test
 
@@ -86,6 +87,7 @@ backup  : clean
 	cd .. ; tar czvf babygit.tar.gz baby-git
 
 test    :
-	@echo "DISTRO = $(DISTRO), CC = $(CC)\n"
-	@echo "PROGS = $(PROGS)\n" 
+	@echo "SYSTEM = $(SYSTEM)"
+	@echo "CC = $(CC)"
+	@echo "PROGS = $(PROGS)" 
 
