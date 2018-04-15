@@ -23,7 +23,7 @@ printf "\n*** Updating cache ***\n"
 update-cache ${TEXT_FILE1}
 update-cache ${TEXT_FILE2}
 
-printf "*** Writing cached tree ***\n"
+printf "*** Writing current tree ***\n"
 tree_sha=$(write-tree)
 #printf ${tree_sha}
 
@@ -36,7 +36,7 @@ blobs=$(read-tree ${tree_sha} | sed 's/ /_/gp')
 blobs=$(echo ${blobs} | sed 's/ /_/gp')
 #printf ${blobs}
 
-printf "\n*** Displaying file contents ***\n"
+printf "*** Displaying file contents ***\n"
 for file in ${TEXT_FILE1} ${TEXT_FILE2}
 do
     blob_hash1=$(echo ${blobs} | sed -n s/^.*${file}_//p | tr -d '()')
@@ -53,7 +53,7 @@ do
     cat ${contents}
 done
 
-printf "\n*** Getting differences between cached tree and working files ***\n"
+printf "\n*** Getting differences between current tree and working files ***\n"
 show-diff
 
 # End script

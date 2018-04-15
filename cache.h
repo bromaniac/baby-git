@@ -48,7 +48,14 @@
 #include <stdlib.h> /* Standard C library for library definitions. */
 #include <stdarg.h> /* Standard C library for variable argument lists. */
 #include <errno.h> /* Standard C library for system error numbers. */
-#include <sys/mman.h> /* Standard C library for memory management declarations. */
+
+#ifndef BGIT_WINDOWS
+    #include <sys/mman.h> /* Standard C library for memory management declarations. */
+#else
+    #include <windows.h>
+    #include <Lmcons.h>
+    #include <direct.h>
+#endif
 
 #include <openssl/sha.h> /* Include SHA hash tools from openssl library. */
 #include <zlib.h> /* Include compression tools from zlib library. */
@@ -63,6 +70,19 @@
 
 /* This `CACHE_SIGNATURE` is hardcoded to be loaded into all cache_headers. */
 #define CACHE_SIGNATURE 0x44495243	/* Linus Torvalds: "DIRC" */
+
+#ifdef BGIT_UNIX
+    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## e )
+    #define STAT_TIME_NSEC( st, st_xtim ) ( st.st_xtim.tv_nsec )
+
+#elif defined BGIT_DARWIN
+    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## espec.tv_sec )
+    #define STAT_TIME_NSEC( st, st_xtim ) ( st.st_xtim ## espec.tv_nsec )
+
+#elif defined BGIT_WINDOWS
+    #define STAT_TIME_SEC( st, st_xtim ) ( st.st_xtim ## e )
+    #define STAT_TIME_NSEC( st, st_xtim ) 0
+#endif
 
 /* Represents a header structure to identify a set of cache_entries. */
 struct cache_header {

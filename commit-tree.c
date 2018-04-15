@@ -153,8 +153,10 @@ The following variables and functions are defined locally.
 
 */
 
+#ifndef BGIT_WINDOWS
 /* Include header file for working with user account structures (like `passwd`) */
 #include <pwd.h>
+#endif
 
 /* Include header file for workin with date and time structures. */
 #include <time.h>

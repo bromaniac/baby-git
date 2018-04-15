@@ -96,11 +96,11 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
 	    ce->ctime.nsec != (unsigned int)st->st_ctimespec.tv_nsec)
 		changed |= CTIME_CHANGED;
 */
-        if (ce->mtime.sec  != (unsigned int)st->st_mtime ||
-            ce->mtime.nsec != (unsigned int)st->st_mtim.tv_nsec)
+        if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
+            ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
                 changed |= MTIME_CHANGED;
-        if (ce->ctime.sec  != (unsigned int)st->st_ctime ||
-            ce->ctime.nsec != (unsigned int)st->st_ctim.tv_nsec)
+        if (ce->ctime.sec  != (unsigned int)STAT_TIME_SEC( st, st_ctim ) ||
+            ce->ctime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_ctim ))
                 changed |= CTIME_CHANGED;
 
 	if (ce->st_uid != (unsigned int)st->st_uid ||
