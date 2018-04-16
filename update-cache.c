@@ -531,6 +531,9 @@ int main(int argc, char **argv)
 	int i; /* Iterator for `for` loop below. */
     int newfd; /* `New file descriptor` to reference cache/index file. */
     int entries; /* The # of entries in the cache, as returned by read_cache(). */
+    char cache_file[]      = ".dircache/index";
+    char cache_lock_file[] = ".dircache/index.lock";
+    
 
     /*
      * Read in the contents of the `.dircache/index` file into the `active_cache`.
@@ -547,7 +550,7 @@ int main(int argc, char **argv)
      * Open a new file descriptor that references the `.dircache/index.lock` file.
      * which is likely a new file. Throw error if it is < 0, indicating failure.
      */
-	newfd = open(".dircache/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = open(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0) {
 		perror("unable to create new cachefile");
 		return -1;
@@ -591,10 +594,11 @@ int main(int argc, char **argv)
      *      1) Calls `write_cache` to set up a cache_header, add the cache_entries, hash it all, and write to index file.
      *      2) Renames the index file from `.dircache/index.lock` to simply `.dircache/index`.
      */
-	if (!write_cache(newfd, active_cache, active_nr) && !rename(".dircache/index.lock", ".dircache/index"))
+	if (!write_cache(newfd, active_cache, active_nr) 
+                && !rename(cache_lock_file, cache_file))
 		return 0;
 
 /* Unlink the `.dircache/index.lock` file since it won't be used due to some failure. */
 out:
-	unlink(".dircache/index.lock");
+	unlink(cache_lock_file);
 }

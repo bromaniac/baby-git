@@ -324,13 +324,12 @@ int main(int argc, char **argv)
 	char *date, *realdate; /* Used to store the date. */
 	char comment[1000]; /* Used to store the commit message. */
 
-    /* The `passwd` struct is used for storing user account information. */
-	struct passwd *pw;
-
         #ifndef BGIT_WINDOWS
+            /* The `passwd` struct is used for storing user account information. */
+            struct passwd *pw;
             char *realgecos, *username;
         #else
-            unsigned int uname_len = UNLEN + 1;
+            unsigned long uname_len = UNLEN + 1;
             char realgecos[uname_len];
             char username[uname_len];
         #endif
@@ -378,8 +377,8 @@ int main(int argc, char **argv)
 
         #else
 
-        GetUserNameEx( NameDisplay, realgecos, uname_len );
-        GetUserName( username, uname_len );
+        GetUserNameEx( NameFullyQualifiedDN, realgecos, &uname_len );
+        GetUserName( username, &uname_len );
 
         #endif
 

@@ -28,8 +28,8 @@ OBJS    = init-db.o update-cache.o write-tree.o commit-tree.o read-tree.o \
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D BGIT_WINDOWS
-    PROGS  := $(subst .o,.exe,$(OBJS))
-    RCOBJ   = read-cache.exe
+    LDLIBS += -lmman -lSecur32 -lWs2_32
+    PROGS  := $(subst .o,,$(OBJS))
 else
     PROGS  := $(subst .o,,$(OBJS))
     SYSTEM := $(shell uname -s)
@@ -84,7 +84,8 @@ clean   :
 	rm -f $(OBJS) $(PROGS)
 
 backup  : clean
-	cd .. ; tar czvf babygit.tar.gz baby-git
+	cd ..; tar czvf babygit.tar.gz baby-git --exclude .git* \
+	    --exclude .dircache --exclude temp_git_file*
 
 test    :
 	@echo "SYSTEM = $(SYSTEM)"

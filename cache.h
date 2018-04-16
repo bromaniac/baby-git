@@ -52,9 +52,13 @@
 #ifndef BGIT_WINDOWS
     #include <sys/mman.h> /* Standard C library for memory management declarations. */
 #else
+    #define SECURITY_WIN32
     #include <windows.h>
-    #include <Lmcons.h>
+    #include <winsock2.h>
+    #include <lmcons.h>
     #include <direct.h>
+    #include <secext.h>
+    #include <sys/mman.h>
 #endif
 
 #include <openssl/sha.h> /* Include SHA hash tools from openssl library. */

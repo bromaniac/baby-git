@@ -37,7 +37,7 @@
 #ifndef BGIT_WINDOWS
     #define MKDIR( path ) ( mkdir( path, 0700 ) )
 #else
-    #define MKIDR( path ) ( _mkdir( path ) )
+    #define MKDIR( path ) ( _mkdir( path ) )
 #endif
 
 /*	The above 'include' allows use of the following functions and

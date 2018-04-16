@@ -31,6 +31,10 @@ printf "\n*** Committing current tree ***\n"
 commit_sha=$(commit-tree ${tree_sha} < ${CHANGE_LOG} | sed -n '$p' )
 printf "Commit object sha:      ${commit_sha}\n"
 
+printf "\n*** Reading the commit object ***\n"
+commit=$(cat-file "${commit_sha}" | awk '{ print $1 }' | tr -d ':')
+cat ${commit}
+
 printf "\n*** Reading current tree ***\n"
 blobs=$(read-tree ${tree_sha} | sed 's/ /_/gp')
 blobs=$(echo ${blobs} | sed 's/ /_/gp')
