@@ -377,7 +377,7 @@ int main(int argc, char **argv)
 
         #else
 
-        GetUserNameEx( NameFullyQualifiedDN, realgecos, &uname_len );
+        GetUserNameEx( NameDisplay, realgecos, &uname_len );
         GetUserName( username, &uname_len );
 
         #endif

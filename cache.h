@@ -53,11 +53,11 @@
     #include <sys/mman.h> /* Standard C library for memory management declarations. */
 #else
     #define SECURITY_WIN32
-    #include <windows.h>
     #include <winsock2.h>
+    #include <windows.h>
     #include <lmcons.h>
     #include <direct.h>
-    #include <secext.h>
+    #include <security.h>
     #include <sys/mman.h>
 #endif
 
@@ -87,6 +87,14 @@
     #define STAT_TIME_SEC( st, st_xtim ) ( (st)->st_xtim ## e )
     #define STAT_TIME_NSEC( st, st_xtim ) 0
 #endif
+
+#ifndef BGIT_WINDOWS
+    #define OPEN_FILE( fname, flags, mode ) open( fname, flags, mode );
+#else
+    #define OPEN_FILE( fname, flags, mode ) open( fname, flags | O_BINARY, \
+                                                      mode );
+#endif
+
 
 /* Represents a header structure to identify a set of cache_entries. */
 struct cache_header {

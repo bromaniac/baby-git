@@ -211,6 +211,16 @@
 
 */
 
+#ifndef BGIT_WINDOWS
+    #define RENAME( src_file, target_file ) rename( src_file, target_file )
+    #define RENAME_FAIL -1 
+#else
+    #define RENAME( src_file, target_file ) MoveFileEx( src_file, \
+                                                target_file, \
+                                                MOVEFILE_REPLACE_EXISTING )
+    #define RENAME_FAIL 0 
+#endif
+
 /*
  * Function: `cache_name_compare`
  * Parameters:
@@ -550,7 +560,7 @@ int main(int argc, char **argv)
      * Open a new file descriptor that references the `.dircache/index.lock` file.
      * which is likely a new file. Throw error if it is < 0, indicating failure.
      */
-	newfd = open(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = OPEN_FILE(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0) {
 		perror("unable to create new cachefile");
 		return -1;
@@ -594,9 +604,12 @@ int main(int argc, char **argv)
      *      1) Calls `write_cache` to set up a cache_header, add the cache_entries, hash it all, and write to index file.
      *      2) Renames the index file from `.dircache/index.lock` to simply `.dircache/index`.
      */
-	if (!write_cache(newfd, active_cache, active_nr) 
-                && !rename(cache_lock_file, cache_file))
+	if (!write_cache(newfd, active_cache, active_nr)) {
+            close( newfd );
+            if (RENAME(cache_lock_file, cache_file) != RENAME_FAIL) {
 		return 0;
+            }
+        }
 
 /* Unlink the `.dircache/index.lock` file since it won't be used due to some failure. */
 out:
