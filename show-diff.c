@@ -100,9 +100,11 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
 		changed |= OWNER_CHANGED;
 	if (ce->st_mode != (unsigned int)st->st_mode)
 		changed |= MODE_CHANGED;
+        #ifndef BGIT_WINDOWS
 	if (ce->st_dev != (unsigned int)st->st_dev ||
 	    ce->st_ino != (unsigned int)st->st_ino)
 		changed |= INODE_CHANGED;
+        #endif
 	if (ce->st_size != (unsigned int)st->st_size)
 		changed |= DATA_CHANGED;
 	return changed;

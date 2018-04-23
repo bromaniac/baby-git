@@ -319,18 +319,18 @@ int main(int argc, char **argv)
 	int parents = 0; /* The number of passed-in parent commits. */
 	unsigned char tree_sha1[20]; /* The SHA1 of the tree to be committed. */
 	unsigned char parent_sha1[MAXPARENT][20]; /* An array of passed-in parent commit SHA1 hashes. */
-	char *gecos;
+	char *gecos, *realgecos;
 	char *email, realemail[1000]; /* Used to store the user's email address. */
+        size_t hostname_size;
 	char *date, *realdate; /* Used to store the date. */
 	char comment[1000]; /* Used to store the commit message. */
 
         #ifndef BGIT_WINDOWS
             /* The `passwd` struct is used for storing user account information. */
             struct passwd *pw;
-            char *realgecos, *username;
+            char *username;
         #else
             unsigned long uname_len = UNLEN + 1;
-            char realgecos[uname_len];
             char username[uname_len];
         #endif
 
@@ -377,8 +377,8 @@ int main(int argc, char **argv)
 
         #else
 
-        GetUserNameEx( NameDisplay, realgecos, &uname_len );
         GetUserName( username, &uname_len );
+        realgecos = username;
 
         #endif
 
@@ -389,7 +389,12 @@ int main(int argc, char **argv)
 	realemail[len] = '@';
 
     /* Get the hostname. */
-	gethostname(realemail+len+1, sizeof(realemail)-len-1);
+        hostname_size = sizeof(realemail) - len - 1;
+        #ifndef BGIT_WINDOWS
+	gethostname(realemail+len+1, hostname_size);
+        #else
+        GetComputerName( realemail+len+1, &hostname_size );
+        #endif
 
     /* Get the current date and time. */
 	time(&now);
