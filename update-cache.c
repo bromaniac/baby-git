@@ -348,13 +348,27 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce, int f
     /*
      * Set up memory location to store the contents of the file to be added to cache.
      */
+        #ifndef BGIT_WINDOWS
 	void *in = mmap(NULL, st->st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        #else
+        void *fhandle = CreateFileMapping( (HANDLE) _get_osfhandle(fd), NULL, 
+                            PAGE_READONLY, 0, 0, NULL);
+        if (!fhandle)
+            return -1;
+        void *in = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, st->st_size );
+        CloseHandle( fhandle );
+        #endif
 	SHA_CTX c; /* Declate a SHA context variable. */
 
 	close(fd); /* Release the file descriptor `fd` since we no longer need it. */
 
+        #ifndef BGIT_WINDOWS
 	if (!out || (int)(long)in == -1) /* Return -1 (failure) if `out` or `in` setup failed. */
-		return -1;
+	    return -1;
+        #else
+        if (!out || in == (void *) NULL)
+            return -1;
+        #endif
 
     /*
      * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.

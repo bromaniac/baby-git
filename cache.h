@@ -58,7 +58,7 @@
     #include <lmcons.h>
     #include <direct.h>
     #include <security.h>
-    #include <sys/mman.h>
+    #include <io.h>
 #endif
 
 #include <openssl/sha.h> /* Include SHA hash tools from openssl library. */

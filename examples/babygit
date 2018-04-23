@@ -57,7 +57,7 @@ do
     cat ${contents}
 done
 
-printf "\n*** Getting differences between current tree and working files ***\n"
+printf "\n*** Getting diff between current tree and current files ***\n"
 show-diff
 
 # End script

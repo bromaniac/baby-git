@@ -351,9 +351,9 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	char buffer[8192]; /* Character array to hold file content. */
 	struct stat st; /* The `stat` object to hold file info of the file to be read. */
 	int i; /* Not used. Even almighty Linux makes mistakes. */
-    int fd; /* File descriptor: Integer to be associated with the file to be read. */
-    int ret;
-    int bytes;
+        int fd; /* File descriptor: Integer to be associated with the file to be read. */
+        int ret;
+        int bytes;
 	void *map, *buf;
 	char *filename = sha1_file_name(sha1); /* Get the name of the file to be read in, identified by the passed-in SHA1. */
 
@@ -380,15 +380,26 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 	}
 
   /* Set up memory location to store the contents of the file to be added to cache. */
-  map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  close(fd); /* Release the file descriptor for future use. */
+        #ifndef BGIT_WINDOWS
+        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (-1 == (int)(long)map) /* Return NULL (failure) if mmap failed. */
-		return NULL;
+	    return NULL;
+        #else
+        void *fhandle = CreateFileMapping( (HANDLE) _get_osfhandle(fd), NULL, 
+                            PAGE_READONLY, 0, 0, NULL );
+        if (!fhandle)
+            return NULL;
+        map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, st.st_size );
+        CloseHandle( fhandle );
+        if (map == (void *) NULL)
+            return NULL;
+        #endif
+        close(fd); /* Release the file descriptor for future use. */
 
     /*  
      * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.
      */
-    memset(&stream, 0, sizeof(stream));
+        memset(&stream, 0, sizeof(stream));
 	stream.next_in = map; /* Set mmap'ed location as the first addition to the compression stream. */
 	stream.avail_in = st.st_size; /* Allow size of object store file to be added to the stream. */
 	stream.next_out = buffer; /* Set the `buffer` as the output destination for the uncompressed file content. */
@@ -598,7 +609,11 @@ int read_cache(void)
      * reference to an always invalid memory location that would not be
      * able to be returned in the event of successful operation.
      */
+        #ifndef BGIT_WINDOWS
 	map = (void *)-1;
+        #else
+	map = (void *) NULL;
+        #endif
 
     /*
      * Populate the `st` variable with the output of `fstat()` operating on
@@ -622,7 +637,7 @@ int read_cache(void)
          * a valid cache since it must be made up of a `cache_header` and at
          * least 1 `cache_entry`.
          */
-		if (size > sizeof(struct cache_header))
+		if (size > sizeof(struct cache_header)) {
             /*
              * Read the `.dircache/index` file's content into memory locaiton
              * referenced by `map`. Think of this as just a way to read in the
@@ -632,7 +647,18 @@ int read_cache(void)
              * -http://pubs.opengroup.org/onlinepubs/009695399/functions/mmap.html
              * -https://stackoverflow.com/questions/258091/when-should-i-use-mmap-for-file-access
              */
-			map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+                    #ifndef BGIT_WINDOWS
+		    map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+                    #else
+                    void *fhandle 
+                        = CreateFileMapping( (HANDLE) _get_osfhandle(fd), 
+                              NULL, PAGE_READONLY, 0, 0, NULL );
+                    if (!fhandle)
+                        return error("CreateFileMapping failed");
+                    map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, size );
+                    CloseHandle( fhandle );
+                    #endif
+                }
 	}
 
     /*
@@ -643,8 +669,13 @@ int read_cache(void)
 	close(fd);
 
     /* Return an error in the event of `mmap()` failure to map the file to memory. */
+        #ifndef BGIT_WINDOWS
 	if (-1 == (int)(long)map)
-		return error("mmap failed");
+	    return error("mmap failed");
+        #else
+        if (map == (void *) NULL)
+            return error("MapViewOfFile failed");
+        #endif
 
     /*
      * Point the `hdr` cache header pointer to the memory address where the `.dircache/index`
@@ -690,7 +721,11 @@ int read_cache(void)
  * memory location that is being used to store the file contents, so it doesn't hog up that space. 
  */
 unmap:
+        #ifndef BGIT_WINDOWS
 	munmap(map, size);
+        #else
+        UnmapViewOfFile( map );
+        #endif
 	errno = EINVAL;
 	return error("verify header failed");
 }
