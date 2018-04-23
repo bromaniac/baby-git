@@ -211,6 +211,16 @@
 
 */
 
+#ifndef BGIT_WINDOWS
+    #define RENAME( src_file, target_file ) rename( src_file, target_file )
+    #define RENAME_FAIL -1 
+#else
+    #define RENAME( src_file, target_file ) MoveFileEx( src_file, \
+                                                target_file, \
+                                                MOVEFILE_REPLACE_EXISTING )
+    #define RENAME_FAIL 0 
+#endif
+
 /*
  * Function: `cache_name_compare`
  * Parameters:
@@ -421,12 +431,10 @@ static int add_file_to_cache(char *path)
 	memcpy(ce->name, path, namelen); /* Copy `path` into the cache_entry's `name` member. */
 
     /* Load the info returned by fstat() call into the cache_entry's members. */
-	ce->ctime.sec = st.st_ctime;
-	/* ce->ctime.nsec = st.st_ctimespec.tv_nsec; */
-        ce->ctime.nsec = st.st_ctim.tv_nsec;
-	ce->mtime.sec = st.st_mtime;
-	/* ce->mtime.nsec = st.st_mtimespec.tv_nsec; */
-        ce->mtime.nsec = st.st_mtim.tv_nsec;
+	ce->ctime.sec = STAT_TIME_SEC( &st, st_ctim );
+        ce->ctime.nsec = STAT_TIME_NSEC( &st, st_ctim );
+	ce->mtime.sec = STAT_TIME_SEC( &st, st_mtim );
+        ce->mtime.nsec = STAT_TIME_NSEC( &st, st_mtim );
 	ce->st_dev = st.st_dev;
 	ce->st_ino = st.st_ino;
 	ce->st_mode = st.st_mode;
@@ -533,6 +541,9 @@ int main(int argc, char **argv)
 	int i; /* Iterator for `for` loop below. */
     int newfd; /* `New file descriptor` to reference cache/index file. */
     int entries; /* The # of entries in the cache, as returned by read_cache(). */
+    char cache_file[]      = ".dircache/index";
+    char cache_lock_file[] = ".dircache/index.lock";
+    
 
     /*
      * Read in the contents of the `.dircache/index` file into the `active_cache`.
@@ -549,7 +560,7 @@ int main(int argc, char **argv)
      * Open a new file descriptor that references the `.dircache/index.lock` file.
      * which is likely a new file. Throw error if it is < 0, indicating failure.
      */
-	newfd = open(".dircache/index.lock", O_RDWR | O_CREAT | O_EXCL, 0600);
+	newfd = OPEN_FILE(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (newfd < 0) {
 		perror("unable to create new cachefile");
 		return -1;
@@ -593,10 +604,14 @@ int main(int argc, char **argv)
      *      1) Calls `write_cache` to set up a cache_header, add the cache_entries, hash it all, and write to index file.
      *      2) Renames the index file from `.dircache/index.lock` to simply `.dircache/index`.
      */
-	if (!write_cache(newfd, active_cache, active_nr) && !rename(".dircache/index.lock", ".dircache/index"))
+	if (!write_cache(newfd, active_cache, active_nr)) {
+            close( newfd );
+            if (RENAME(cache_lock_file, cache_file) != RENAME_FAIL) {
 		return 0;
+            }
+        }
 
 /* Unlink the `.dircache/index.lock` file since it won't be used due to some failure. */
 out:
-	unlink(".dircache/index.lock");
+	unlink(cache_lock_file);
 }

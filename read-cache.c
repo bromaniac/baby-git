@@ -361,7 +361,11 @@ void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
      * Associate a file descriptor with the file in the object store.
      * If the returned value is < 0, there was an error reading the file.
      */
-	fd = open(filename, O_RDONLY);
+        #ifndef BGIT_WINDOWS
+	    fd = open(filename, O_RDONLY );
+        #else
+	    fd = open(filename, O_RDONLY | O_BINARY );
+        #endif
 	if (fd < 0) {
 		perror(filename);
 		return NULL;
@@ -480,7 +484,7 @@ int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size)
     int fd; /* Will be used to store association to the new object store file. */
 
     /* Associate `fd` with a newly created file in the object store to hold the content. */
-	fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+        fd = OPEN_FILE(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 
     /* Error if failure occurs during file association. */
 	if (fd < 0)
@@ -581,7 +585,11 @@ int read_cache(void)
      * Associate the file descriptor `fd` (just an integer) with the
      * `.dircache/index` file, i.e. the current cache.
      */
-	fd = open(".dircache/index", O_RDONLY);
+        #ifndef BGIT_WINDOWS
+	    fd = open(".dircache/index", O_RDONLY );
+        #else
+	    fd = open(".dircache/index", O_RDONLY | O_BINARY );
+        #endif
 	if (fd < 0)
 		return (errno == ENOENT) ? 0 : error("open failed");
 

@@ -33,6 +33,13 @@
  */
 
 #include "cache.h"
+
+#ifndef BGIT_WINDOWS
+    #define MKDIR( path ) ( mkdir( path, 0700 ) )
+#else
+    #define MKDIR( path ) ( _mkdir( path ) )
+#endif
+
 /*	The above 'include' allows use of the following functions and
 	variables from <cache.h> header file, ranked in order of first use
 	in this file. Most are functions/macros from standard C libraries
@@ -155,7 +162,7 @@ int main(int argc, char **argv)
      * current directory. If it fails, `mkdir()` will return
      * `-1` and the program will print a message and exit.
      */
-	if (mkdir(".dircache", 0700) < 0) {
+	if (MKDIR(".dircache") < 0) {
 		perror("unable to create .dircache");
 		exit(1);
 	}
@@ -202,7 +209,7 @@ int main(int argc, char **argv)
 	 * `objects`. If it fails, `mkdir()` will return
      * `-1` and the program will print a message and exit.
      */
-    if (mkdir(sha1_dir, 0700) < 0) {
+    if (MKDIR(sha1_dir) < 0) {
 		if (errno != EEXIST) {
 			perror(sha1_dir);
 			exit(1);
@@ -250,7 +257,7 @@ int main(int argc, char **argv)
 		 * `mkdir()` will return `-1` and the program will
 		 * print a message and exit.
 		 */
-		if (mkdir(path, 0700) < 0) {
+		if (MKDIR(path) < 0) {
 			if (errno != EEXIST) {
 				perror(path);
 				exit(1);

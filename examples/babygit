@@ -1,0 +1,63 @@
+#!/bin/sh
+# Script for a sample baby-git workflow.
+
+CACHE_DIR=.dircache
+TEXT_FILE1="myfile1.txt"
+TEXT_FILE2="myfile2.txt"
+CHANGE_LOG=changelog
+
+#output="$(cat ${TEXT_FILE1})"
+#printf ${output}
+
+if [ -d ${CACHE_DIR} ]
+then
+    printf "*** Deleting ${CACHE_DIR} ***\n"
+    rm -rf ${CACHE_DIR}
+    printf "*** Deleting temp files ***\n"
+    rm -rf temp_git_file_*
+fi
+
+printf "*** Initializing object database ***\n"
+init-db
+printf "\n*** Updating cache ***\n"
+update-cache ${TEXT_FILE1}
+update-cache ${TEXT_FILE2}
+
+printf "*** Writing current tree ***\n"
+tree_sha=$(write-tree)
+#printf ${tree_sha}
+
+printf "\n*** Committing current tree ***\n"
+commit_sha=$(commit-tree ${tree_sha} < ${CHANGE_LOG} | sed -n '$p' )
+printf "Commit object sha:      ${commit_sha}\n"
+
+printf "\n*** Reading the commit object ***\n"
+commit=$(cat-file "${commit_sha}" | awk '{ print $1 }' | tr -d ':')
+cat ${commit}
+
+printf "\n*** Reading current tree ***\n"
+blobs=$(read-tree ${tree_sha} | sed 's/ /_/gp')
+blobs=$(echo ${blobs} | sed 's/ /_/gp')
+#printf ${blobs}
+
+printf "*** Displaying file contents ***\n"
+for file in ${TEXT_FILE1} ${TEXT_FILE2}
+do
+    blob_hash1=$(echo ${blobs} | sed -n s/^.*${file}_//p | tr -d '()')
+    blob_hash2=$(echo ${blob_hash1} | sed -n s/_.*$//p)
+    blob_hash=${blob_hash2}
+    if [ -z ${blob_hash2} ]
+    then 
+        blob_hash=${blob_hash1}
+    fi
+    printf "\nBlob object sha:        ${blob_hash}\n"
+
+    contents=$(cat-file "${blob_hash}" | awk '{ print $1 }' | tr -d ':')
+    printf "${contents}\n"
+    cat ${contents}
+done
+
+printf "\n*** Getting differences between current tree and working files ***\n"
+show-diff
+
+# End script

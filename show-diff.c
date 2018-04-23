@@ -88,19 +88,11 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
 	unsigned int changed = 0;
 
     /* Compare each cached file parameter to those in working directory file, to determine whether files match.  */
-/*
-	if (ce->mtime.sec  != (unsigned int)st->st_mtimespec.tv_sec ||
-	    ce->mtime.nsec != (unsigned int)st->st_mtimespec.tv_nsec)
-		changed |= MTIME_CHANGED;
-	if (ce->ctime.sec  != (unsigned int)st->st_ctimespec.tv_sec ||
-	    ce->ctime.nsec != (unsigned int)st->st_ctimespec.tv_nsec)
-		changed |= CTIME_CHANGED;
-*/
-        if (ce->mtime.sec  != (unsigned int)st->st_mtime ||
-            ce->mtime.nsec != (unsigned int)st->st_mtim.tv_nsec)
+        if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
+            ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
                 changed |= MTIME_CHANGED;
-        if (ce->ctime.sec  != (unsigned int)st->st_ctime ||
-            ce->ctime.nsec != (unsigned int)st->st_ctim.tv_nsec)
+        if (ce->ctime.sec  != (unsigned int)STAT_TIME_SEC( st, st_ctim ) ||
+            ce->ctime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_ctim ))
                 changed |= CTIME_CHANGED;
 
 	if (ce->st_uid != (unsigned int)st->st_uid ||
@@ -108,9 +100,11 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
 		changed |= OWNER_CHANGED;
 	if (ce->st_mode != (unsigned int)st->st_mode)
 		changed |= MODE_CHANGED;
+        #ifndef BGIT_WINDOWS
 	if (ce->st_dev != (unsigned int)st->st_dev ||
 	    ce->st_ino != (unsigned int)st->st_ino)
 		changed |= INODE_CHANGED;
+        #endif
 	if (ce->st_size != (unsigned int)st->st_size)
 		changed |= DATA_CHANGED;
 	return changed;

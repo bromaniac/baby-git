@@ -1,89 +1,94 @@
+# Makefile to compile Baby-Git program in Unix-like systems.
 #
-#  All documentation (comments) unless explicitly noted:
+# Synopsis:
 #
-#      Copyright 2018, AnalytixBar LLC, Jacob Stopak
+# For Linux distributions and MSYS2:
 #
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  version 2 as published by the Free Software Foundation.
+# $ make
+# $ make install
+# $ make clean
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+# For FreeBSD:
 #
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, see <http://www.gnu.org/licenses/>.
-#
-#**************************************************************************
-#
-#  This is the original Makefile for git.
-#
-#  It is used to invoke the gcc C compiler to build binary executable
-#  files for each of the original 7 git commands:
-#
-#   1) init-db
-#   2) update-cache
-#   3) cat-file
-#   4) show-diff
-#   5) write-tree
-#   6) read-tree
-#   7) commit-tree
-#
-#  This Makefile can be invoked in 3 variations, by running the 3 following
-#  commands from the command line inside the same directory as the Makefile:
-#
-#  1) `make clean`: This removes all previously built executables and build
-#     files, from the working directory.
-#
-#  2) `make backup`: This first runs `make clean` and then backs up the
-#     current directory into a tar archive.
-#
-#  3) `make`: The builds the codebase and creates the 7 git executables.
-#
+# $ gmake
+# $ gmake install
+# $ gmake clean
 
-CFLAGS=-g # The `-g` compiler flag tells gcc to generate source-level debug information.
-CC=gcc # Use the `gcc` C compiler.
+SHELL   = /bin/sh
+INSTALL = install
+prefix  = $(HOME)
+bindir  = $(prefix)/bin
 
-# Specify all the executables names to make.
-PROG=update-cache show-diff init-db write-tree read-tree commit-tree cat-file
-all: $(PROG)
+CC      = cc
+CFLAGS  = -g -Wall -O3
+LDLIBS  = -lcrypto -lz
+RCOBJ   = read-cache.o
+OBJS    = init-db.o update-cache.o write-tree.o commit-tree.o read-tree.o \
+              cat-file.o show-diff.o 
 
-install: $(PROG)
-	install $(PROG) $(HOME)/bin/
+ifeq ($(OS),Windows_NT)
+    CFLAGS += -D BGIT_WINDOWS
+    LDLIBS += -lmman -lSecur32 -lWs2_32
+    PROGS  := $(subst .o,,$(OBJS))
+else
+    PROGS  := $(subst .o,,$(OBJS))
+    SYSTEM := $(shell uname -s)
 
-# Include the following dependencies in the build.
-LIBS= -lcrypto -lboost_iostreams -lz
+    ifeq ($(SYSTEM),Linux)
+        CFLAGS += -D BGIT_UNIX
+    else
+        ifeq ($(SYSTEM),FreeBSD)
+            CFLAGS += -D BGIT_UNIX
+        else
+            ifeq ($(SYSTEM),Darwin)
+                CFLAGS += -D BGIT_DARWIN
+            endif
+        endif
+    endif
+endif
 
-# Specify which compiled output (.o files) to use for each executable.
-init-db: init-db.o
+OBJS   += $(RCOBJ)
 
-update-cache: update-cache.o read-cache.o
-	$(CC) $(CFLAGS) -o update-cache update-cache.o read-cache.o $(LIBS)
+.PHONY : all install clean backup test
 
-show-diff: show-diff.o read-cache.o
-	$(CC) $(CFLAGS) -o show-diff show-diff.o read-cache.o $(LIBS)
+all    : $(PROGS)
 
-write-tree: write-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o write-tree write-tree.o read-cache.o $(LIBS)
+init-db      : init-db.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-read-tree: read-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
+update-cache : update-cache.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+write-tree   : write-tree.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-cat-file: cat-file.o read-cache.o
-	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
+commit-tree  : commit-tree.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-# Specify which C header files to include in compilation/linking.
-read-cache.o: cache.h
-show-diff.o: cache.h
+read-tree    : read-tree.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-# Define the steps to run during the `make clean` command.
-clean:
-	rm -f *.o $(PROG) temp_git_file_* # Remove these files from the current directory.
+cat-file     : cat-file.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
 
-# Define the steps to run during the `make backup` command.
-backup: clean
-	cd .. ; tar czvf babygit.tar.gz baby-git # Backup the current directory into a tar archive.
+show-diff    : show-diff.o $(RCOBJ)
+	$(CC) $(CFLAGS) -o $@ $@.o $(RCOBJ) $(LDLIBS)
+
+$(OBJS) : cache.h
+
+
+install : $(PROGS)
+	$(INSTALL) $(PROGS) $(bindir)
+
+clean   :
+	rm -f $(OBJS) $(PROGS)
+
+backup  : clean
+	cd ..; tar czvf babygit.tar.gz baby-git --exclude .git* \
+	    --exclude .dircache --exclude temp_git_file*
+
+test    :
+	@echo "SYSTEM = $(SYSTEM)"
+	@echo "CC = $(CC)"
+	@echo "PROGS = $(PROGS)" 
+
