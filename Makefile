@@ -25,13 +25,11 @@ LDLIBS  = -lcrypto -lz
 RCOBJ   = read-cache.o
 OBJS    = init-db.o update-cache.o write-tree.o commit-tree.o read-tree.o \
               cat-file.o show-diff.o 
+PROGS  := $(subst .o,,$(OBJS))
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D BGIT_WINDOWS
-    LDLIBS += -lmman -lSecur32 -lWs2_32
-    PROGS  := $(subst .o,,$(OBJS))
 else
-    PROGS  := $(subst .o,,$(OBJS))
     SYSTEM := $(shell uname -s)
 
     ifeq ($(SYSTEM),Linux)
