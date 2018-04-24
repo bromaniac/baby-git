@@ -29,7 +29,6 @@ PROGS  := $(subst .o,,$(OBJS))
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -D BGIT_WINDOWS
-    LDLIBS += -lSecur32 -lWs2_32
 else
     SYSTEM := $(shell uname -s)
 

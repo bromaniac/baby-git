@@ -52,12 +52,9 @@
 #ifndef BGIT_WINDOWS
     #include <sys/mman.h> /* Standard C library for memory management declarations. */
 #else
-    #define SECURITY_WIN32
-    #include <winsock2.h>
     #include <windows.h>
     #include <lmcons.h>
     #include <direct.h>
-    #include <security.h>
     #include <io.h>
 #endif
 
