@@ -128,7 +128,7 @@ static void show_differences(struct cache_entry *ce, struct stat *cur,
 	FILE *f;
 
     /* Build up the diff command and store it in `cmd`. */
-	snprintf(cmd, sizeof(cmd), "diff -u - %s", ce->name);
+	snprintf(cmd, sizeof(cmd), "diff --strip-trailing-cr -u - %s", ce->name);
 
     /* Run the diff command and return as `f` pointer to open stream. */
 	f = popen(cmd, "w");

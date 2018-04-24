@@ -627,5 +627,10 @@ int main(int argc, char **argv)
 
 /* Unlink the `.dircache/index.lock` file since it won't be used due to some failure. */
 out:
+        close( newfd );
+        #ifndef BGIT_WINDOWS
 	unlink(cache_lock_file);
+        #else
+	_unlink(cache_lock_file);
+        #endif
 }
