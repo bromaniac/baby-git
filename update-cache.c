@@ -51,17 +51,16 @@
 
    -active_nr: The number of entries in the active cache/index.
 
-   -cache_entry: Structure representing the a single cached/staged file.
+   -cache_entry: Structure representing a single cached/staged file.
 
-   -active_cache: Cache_Entry representing the active cache/index.
+   -active_cache: Array representing the active cache/index.
 
    -memmove(str1, str2, n): The memmove() function shall copy n bytes from
-                            the object pointed to by s2 into the object
-                            pointed to by s1.
+                            the object pointed to by str2 into the object
+                            pointed to by str1.
 
-   -sizeof(datatype): Generates the size of a variable or datatype,
-                      measured in the number of char size storage
-                      units required for the type.
+   -sizeof(datatype): Operator that gives the number of bytes needed to store 
+                      a datatype or variable. 
 
    -z_stream: General purpose compression/decompression stream. Sourced
               from <zlib.h>.
@@ -80,12 +79,13 @@
                the desired memory protection of the mapping. `PROT_READ`
                indicates that pages may be read. Sourced from <sys/mman.h>.
                 
-   -MAP_PRIVATE: Flag for the mmap() function `prot` parameter describing
+   -MAP_PRIVATE: Flag for the mmap() function `flags` parameter describing
                  the desired memory protection of the mapping. `MAP_PRIVATE`
-                 indicates a private copy-on-write mapping. Sourced from
-                 <sys/mman.h>.
+                 indicates that changes to the mapped data are private to the
+                 calling process and should not change the underlying object.
+                 Sourced from <sys/mman.h>.
 
-   -SHA_CTX: SHA context struct used to store information related to the
+   -SHA_CTX: SHA context structure used to store information related to the
              process of hashing the content. Sourced from <sha.h>.
 
    -close(file_descriptor): Deallocate the file descriptor. The fd will be
@@ -98,18 +98,18 @@
                                       char) into each of the first `n` bytes
                                       of the object pointed to by `s`.
 
-   -deflateInit(z_stream, level): Initializes the internal `z_stream` state
-                                  for compression at `level` which indicates
-                                  scale of speed vs compression on a scale 
-                                  from 0-9. Sourced from <zlib.h>.
+   -deflateInit(z_stream, level): Initializes the internal `z_stream` state 
+                                  for compression at `level`, which indicates 
+                                  the scale of speed vs compression on a scale 
+                                  from 0 to 9. Sourced from <zlib.h>.
 
-   -Z_BEST_COMPRESSION: Translates to integer `9` which as an input to
-                        `deflateInit()` indicates to optimize compressed
+   -Z_BEST_COMPRESSION: Translates to compression level 9, which, as an input 
+                        to `deflateInit()`, indicates optimizing compression
                         size as opposed to compression speed. Sourced from
                         <zlib.h>.
 
-   -sprintf(s, message): Place output followed by the null byte, '\0', in
-                         consecutive bytes starting at *s. Sourced from
+   -sprintf(s, message): Writes `message` string constant to string variable 
+                         `s` followed by the null character '\0'. Sourced from 
                          <stdio.h>.
 
    -deflate(z_stream, flush): Compresses as much data as possible, and stops
@@ -120,10 +120,13 @@
    -Z_OK: Successful zlib return code. It is equal to 0. Sourced from 
           <zlib.h>.
 
-   -Z_FINISH: Flush value for zlib. It is equal to 4. Sourced from <zlib.h>.
+   -Z_FINISH: Flush value for zlib to specify processing of remaining input. 
+              It is equal to 4. Sourced from <zlib.h>.
 
    -deflateEnd(z_stream): All dynamically allocated data structures for
                           `z_stream` are freed. Sourced from <zlib.h>.
+
+=== CONTINUE FROM HERE ===
 
    -SHA1_Init(): Initializes a SHA_CTX structure. Sourced from <sha.h>. 
 
