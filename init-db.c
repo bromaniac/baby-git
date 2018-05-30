@@ -82,9 +82,9 @@
                             <cache.h>) used to customize the name
                             of object store.
 
-   -strlen(string): Return the length of `string` in bytes.
+   -strlen(string): Return the length of `string`.
 
-   -errno: Macro set by system calls to in the event of an error.
+   -errno: Error number of last error.
            Sourced from <errno.h>.
 
    -EEXIST: Error macro indicating that an existing file was
@@ -100,8 +100,8 @@
                        Sourced from <string.h>.
 
    -sprintf(s, message): Place output followed by the null byte,
-                         '\0', in consecutive bytes starting at
-                         *s. Sourced from <stdio.h>.
+                         '\0', in consecutive bytes starting at s.
+                         Sourced from <stdio.h>.
 
    ****************************************************************
 
@@ -122,17 +122,17 @@
           path to each subdirectory in the object store, i.e.
           one subdirectory for each number between 0 and 255
           in hexadecimal. The name of each subdirectory will
-          represent the first two numbers of the sha1 hashes
+          represent the first two numbers of the SHA1 hashes
           of the objects to be stored in that subdirectory.
 
-   -len: The number of bytes in the `sha1_dir` string.
+   -len: The length of string in the `sha1_dir` variable.
 
    -i: For loop counter used to create subdirectories in object
        store.
 
    -fd: Declared but not used. Linus Torvalds is mortal too :D.
 
-   -st: Used to store `stat` struct containing file info
+   -st: Used to store `stat` structure containing file info
         returned from `stat()` function call.
 */
 
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "defaulting to private storage area\n");
 
     /*
-     * Set `len` to the size of `sha1_dir` string in bytes.
+     * Set `len` to the length of the string in `sha1_dir`.
      * This will be used later to build the subdirectories
      * in the object store where the sha1-named files will
      * be stored.
@@ -220,13 +220,13 @@ int main(int argc, char **argv)
     /*
      * Reserve a chunk of memory for the `path` variable. The
      * size of the chunk equals `len` (size in bytes of
-     * `sha1_dir1` + 40 bytes. Does anyone know why Linux
-     * chose 40?
+     * `sha1_dir1` + 40 bytes, long enough to accomodate a 40-digit
+     * hexadecimal SHA1 hash value. 
      */
     path = malloc(len + 40);
 
     /*
-     * Copy the first `len` bytes of `sha1_dir` into the
+     * Copy the first `len` characters of `sha1_dir` into the
      * memory chunk reserved for `path`.
      */
     memcpy(path, sha1_dir, len);
@@ -237,19 +237,18 @@ int main(int argc, char **argv)
      * directory. Each subdirectory will be named with the
      * the first two digits of a number between 0 and 255 in
      * hexadecimal. Each subdirectory will be used to hold the 
-     * sha1 objects whose id's start with those two digits.
+     * objects whose SHA1 hash values start with those two digits.
      */
     for (i = 0; i < 256; i++) {
-
         /*
          * Convert `i` to a two-digit hexadecimal number
          * and tack it onto the path variable after the
-         * `.dircache/objects/` part. That way each time
+         * `.dircache/objects/` part. That way, each time
          * through the loop we build up a path like:
          * `.dircache/objects/00`, `.dircache/objects/01`
          * ...
          * all the way up to...
-         * `.dircache/objects/ef`, `.dircache/objects/ff`
+         * `.dircache/objects/fe`, `.dircache/objects/ff`.
          */
         sprintf(path+len, "/%02x", i);
 
