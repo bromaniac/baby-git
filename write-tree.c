@@ -91,8 +91,9 @@
    -prepend_integer(): Prepend the size of the tree data in bytes to the
                        buffer.
 
-   -ORIG_OFFSET: Macro that defines the number of bytes at the beginning of 
-                 the buffer for the object tag and the object data size.
+   -ORIG_OFFSET: Token that defines the number of bytes at the beginning of 
+                 the buffer that are allocated for the object tag and the 
+                 object data size.
 */
 
 /*
