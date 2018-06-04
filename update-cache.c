@@ -219,9 +219,12 @@
 
    -verify_path(): Checks if a file path is a valid path.
 
-   -add_file_to_cache(): Gets information about a file, writes file metadata 
-                         to a cache entry structure, then calls the index_fd() 
-                         and add_cache_entry functions.
+   -add_file_to_cache(): Gets information about the file to cache, stores the 
+                         file metadata in a cache_entry structure, then calls 
+                         the `index_fd()` function to write the blob object to 
+                         the object store, and the `add_cache_entry()` 
+                         function to insert the cache entry into the 
+                         `active_cache` array lexicographically.
 
    -index_fd(): Compresses file contents and metadata, calculates the hash 
                 value, and writes the blob object to the object database.
@@ -362,7 +365,7 @@ static int add_cache_entry(struct cache_entry *ce)
                                active_alloc * sizeof(struct cache_entry *));
     }
 
-    /* Add the new cache_entry into the active_cache. */
+    /* Insert the new cache entry into the active_cache array. */
     active_nr++;
     if (active_nr > pos)
         memmove(active_cache + pos + 1, active_cache + pos, 
@@ -493,8 +496,8 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
  * Function: `add_file_to_cache`
  * Parameters:
  *      -path: The path of the file to add to the object store and index.
- * Purpose: Get information about the file to cache, write the file metadata
- *          to a cache_entry structure, then call the `index_fd()` function 
+ * Purpose: Get information about the file to cache, store the file metadata
+ *          in a cache_entry structure, then call the `index_fd()` function 
  *          to write the blob object to the object store, and the 
  *          `add_cache_entry()` function to insert the cache entry into the
  *          `active_cache` array lexicographically.
@@ -504,16 +507,18 @@ static int add_file_to_cache(char *path)
     int size, namelen;
     /* Used to reference a cache entry. */
     struct cache_entry *ce; 
-    /* Used to store file info returned from `fstat()` command. */
+    /* Used to store file info from `fstat()` command. */
     struct stat st;
     /* Reference to a file descriptor representing a link to a file. */
     int fd;
 
-    /* Associate file descriptor with file to add to cache. */
+    /* Associate the file descriptor with the file to add to the cache. */
     fd = open(path, O_RDONLY); 
 
-    /* If file association fails, remove file from cache if necessary and 
-     * return -1. 
+    /*
+     * If file association fails, return -1, removing the associated cache
+     * entry from the active_cache array if the file does not exist in the 
+     * working directory.
      */
     if (fd < 0) {
         if (errno == ENOENT)
@@ -522,27 +527,28 @@ static int add_file_to_cache(char *path)
     }
 
     /*
-     * Populate the `st` buffer with file information via fstat(). If fstat()
-     * fails return -1 and release the file descriptor.
+     * Get file information and store it in the `st` stat structure. If 
+     * fstat() fails, release the file descriptor and return -1.
      */
     if (fstat(fd, &st) < 0) {
         close(fd);
         return -1;
     }
 
-    /* The length of the path/filename character string. */
+    /* The length of the path/filename string. */
     namelen = strlen(path); 
-    /* The size in bytes of the cache_entry. */
+    /* The size to allocate to the cache entry in bytes. */
     size = cache_entry_size(namelen); 
     /* Allocate memory of size `size` for the cache_entry. */
     ce = malloc(size); 
-    /* Convert `0` to unsigned char and store `size` times in `ce`. */
+    /* Initialize the cache entry to contain null characters. */
     memset(ce, 0, size); 
-    /* Copy `path` into the cache_entry's `name` member. */
+    /* Copy `path` into the cache entry's `name` member. */
     memcpy(ce->name, path, namelen); 
 
-    /* Load the info returned by fstat() call into the cache_entry's 
-     * members. 
+    /*
+     * Copy the file information obtained from the fstat() call to the cache 
+     * entry's members. 
      */
     ce->ctime.sec = STAT_TIME_SEC( &st, st_ctim );
     ce->ctime.nsec = STAT_TIME_NSEC( &st, st_ctim );
@@ -563,53 +569,57 @@ static int add_file_to_cache(char *path)
     if (index_fd(path, namelen, ce, fd, &st) < 0)
         return -1;
 
+    /*
+     * Insert the cache entry into the active_cache array lexicographically
+     * and then return.
+     */
     return add_cache_entry(ce);
 }
 
 /*
  * Function: `write_cache`
  * Parameters:
- *      -newfd: File descriptor associated with the index file.
- *      -cache: The array of cache_entries to write to the file identified by 
+ *      -newfd: File descriptor associated with the index lock file.
+ *      -cache: The array of cache entries to write to the file identified by 
  *              `newfd`.
- *      -entries: The number of entries in the passed-in `cache`.
- * Purpose: Write the cache header and cache entries to the
+ *      -entries: The number of entries in the `cache` array.
+ * Purpose: Write the cache header and the cache entries to the
  *          .dircache/index.lock file.
  */
 static int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
     SHA_CTX c;                 /* Declare a SHA context. */
-    struct cache_header hdr;   /* Declare a cache_header. */
+    struct cache_header hdr;   /* Declare a cache header structure. */
     int i;                     /* For loop iterator. */
 
-    /* Set this to the signature defined in <cache.h>. */
+    /* Set this to the signature defined in "cache.h". */
     hdr.signature = CACHE_SIGNATURE; 
     /* The version is always set to 1 in this release. */
     hdr.version = 1; 
-    /* Set the number of entries in the cache header. */
+    /* Store the number of active_cache entries in the cache header. */
     hdr.entries = entries; 
 
     /* Initialize the SHA context `c`. */
     SHA1_Init(&c); 
 
-    /* Add the cache_header to the content to be hashed. */
+    /* Calculate the hash of the cache header. */
     SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
 
-    /* Add each of the cache_entries to the content to be hashed. */
+    /* Calculate the hash of each cache entry. */
     for (i = 0; i < entries; i++) {
         struct cache_entry *ce = cache[i];
         int size = ce_size(ce);
         SHA1_Update(&c, ce, size);
     }
 
-    /* Hash the content and store the SHA1 hash in the header. */
+    /* Store the final SHA1 hash in the header. */
     SHA1_Final(hdr.sha1, &c);
 
-    /* Write the cache header to the index file. */
+    /* Write the cache header to the index lock file. */
     if (write(newfd, &hdr, sizeof(hdr)) != sizeof(hdr))
         return -1;
 
-    /* Write each of the cache_entries to the index file. */
+    /* Write each of the cache entries to the index lock file. */
     for (i = 0; i < entries; i++) {
         struct cache_entry *ce = cache[i];
         int size = ce_size(ce);
@@ -621,7 +631,7 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
 
 /*
  * Linus Torvalds: We fundamentally don't like some paths: we don't want
- * dot or dot-dot anywhere, and in fact, we don't even want
+ * dot or dot-dot anywhere, and in fact, we don't even want 
  * any other dot-files (.dircache or anything else). They
  * are hidden, for chist sake.
  *
@@ -655,23 +665,25 @@ inside:
  *      -argv: An array of the command line arguments, including the command 
  *             itself.
  * Purpose: Standard `main` function definition. Runs when the executable 
- *          `commit-tree` is run from the command line.
+ *          `update-cache` is run from the command line.
  */
 int main(int argc, char **argv)
 {
     int i;         /* Iterator for `for` loop below. */
-    int newfd;     /* `New file descriptor` to reference cache/index file. */
-    int entries;   /* The # of entries in the cache, as returned by */
+    int newfd;     /* File descriptor to reference the index lock file. */
+    int entries;   /* The number of entries in the cache, as returned by */
                    /* read_cache(). */
+
+    /* The name of the cache file. */
     char cache_file[]      = ".dircache/index";
-    char cache_lock_file[] = ".dircache/index.lock";
-    
+    /* The name of the cache lock file. */
+    char cache_lock_file[] = ".dircache/index.lock"; 
 
     /*
      * Read in the contents of the `.dircache/index` file into the 
-     * `active_cache`. The number of caches entries will be stored in 
-     * `entries`. Throw error if number of entries is < 0, indicating error 
-     * reading the cache.
+     * `active_cache` array. The number of cache entries will be stored in 
+     * `entries`. Throw an error if the number of entries is < 0, indicating
+     * an error in reading the cache.
      */
     entries = read_cache();
     if (entries < 0) {
@@ -680,9 +692,9 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Open a new file descriptor that references the `.dircache/index.lock` 
-     * file, which is likely a new file. Throw error if it is < 0, indicating 
-     * failure.
+     * Open a file descriptor that references the `.dircache/index.lock` file.
+     * which should not exist. Throw an error if the open() command returns a
+     * value < 0, indicating failure.
      */
     newfd = OPEN_FILE(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
     if (newfd < 0) {
@@ -692,15 +704,16 @@ int main(int argc, char **argv)
 
     /*
      * Iterate over the filenames to add to the cache, which were passed in as
-     * command line arguments like:
+     * command line arguments, like:
      *
      * ./update-cache filename1 filename2 ...
      */
     for (i = 1 ; i < argc; i++) {
-        /* Store the ith filename passed in as command line argument. */
+        /* Store the ith filename passed in as a command line argument. */
         char *path = argv[i];
 
-        /* Verify each path/filename that was passed in. Ignore the invalid 
+        /*
+         * Verify each path/filename that was passed in. Ignore the invalid 
          * ones. 
          */
         if (!verify_path(path)) {
@@ -711,13 +724,12 @@ int main(int argc, char **argv)
         /*
          * This calls `add_file_to_cache()` which does a bunch of stuff:
          *      1) Opens the file at `path`.
-         *      2) Creates a string of file metadata and pulls in the file's 
-         *         content.
-         *      3) Compresses the metadata + content using zlib.
-         *      4) Hashes the compressed content to get the SHA1 hash.
-         *      5) Writes this content to the object store identified by its 
-         *         SHA1 hash.
-         *      6) Adds the new cache entry into the `active_cache`.
+         *      2) Gets information about the file and stores the file
+         *         metadata in a cache entry structure.
+         *      3) Calls the index_fd() function to deflate and hash data, and
+         *         then to write the blob object to the object database.
+         *      4) Calls the add_cache_entry() function to insert the cache
+         *         entry into the active_cache array lexicographically.
          *
          * If any of these steps leads to a non-zero return code (i.e. fails), 
          * jump to the `out` section below.
@@ -730,10 +742,10 @@ int main(int argc, char **argv)
 
     /*
      * This does a few things as well:
-     *      1) Calls `write_cache` to set up a cache_header, add the 
-     *         cache_entries, hash it all, and write to index file.
-     *      2) Renames the index file from `.dircache/index.lock` to simply 
-     *         `.dircache/index`.
+     *      1) Calls the `write_cache()` to set up a cache header, calculate
+     *         the hash of the header and the cache entries, and then write 
+     *         everything to the index lock file.
+     *      2) Renames the `.dircache/index.lock` file to `.dircache/index`.
      */
     if (!write_cache(newfd, active_cache, active_nr)) {
         close( newfd );
@@ -742,9 +754,7 @@ int main(int argc, char **argv)
         }
     }
 
-/* Unlink the `.dircache/index.lock` file since it won't be used due to some 
- * failure. 
-*/
+/* Unlink the `.dircache/index.lock` file. */
 out:
     close( newfd );
     #ifndef BGIT_WINDOWS
