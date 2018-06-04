@@ -93,21 +93,21 @@
                                                       mode );
 #endif
 
-/* Represents a header structure to identify a set of cache_entries. */
+/* Template of the header structure that identifes a set of cache entries. */
 struct cache_header {
     /* Constant across all headers, to validate authenticity. */
     unsigned int signature; 
-    /* Stores a reference to the version of Git that created the cache. */
+    /* Stores the version of Git that created the cache. */
     unsigned int version; 
-    /* The number of cache_entries in the cache. */
+    /* The number of cache entries in the cache. */
     unsigned int entries; 
-    /* The SHA1 hash that identifies the cached content. */
+    /* The SHA1 hash that identifies the cache. */
     unsigned char sha1[20]; 
 };
 
 /*
- * `cache_time` represents a time associated with a particular action taken on 
- * a file corresponding to a cache_entry. For example, the time the file was 
+ * Template of a time structure for storing the time stamps of actions taken on 
+ * a file corresponding to a cache entry. For example, the time the file was 
  * modified. For some info on file times, see:
  * https://www.quora.com/What-is-the-difference-between-mtime-atime-and-ctime
  */
@@ -117,7 +117,8 @@ struct cache_time {
 };
 
 /*
- * A `cache_entry` information about the corresponding user file.
+ * Template of the cache entry structure that stores information about the 
+ * corresponding user file in the working directory.
  */
 struct cache_entry {
     struct cache_time ctime;   /* Time of file's last status change. */
@@ -131,8 +132,8 @@ struct cache_entry {
     unsigned int st_ino;
 
     /*
-     * Specifies the mode of the file. This includes file type information
-     * and the file permission bits.
+     * Specifies the mode of the file. This includes information about the 
+     * file type and permissions.
      */
     unsigned int st_mode;
     unsigned int st_uid;      /* The user ID of the file’s owner. */
@@ -145,12 +146,12 @@ struct cache_entry {
 
 /* The path to the object store. */
 const char *sha1_file_directory; 
-/* An array of pointers to cache entries which we call the `active_cache`. */
+/* An array of pointers to cache entries. */
 struct cache_entry **active_cache; 
 /* The number of entries in the `active_cache` array. */
 unsigned int active_nr; 
 unsigned int active_alloc;  /* The result of calling the `alloc_nr()` macro */
-                            /*  with `active_nr` as an argument. */
+                            /* macro with `active_nr` as the argument. */
 
 /*
  * If desired, you can use an environment variable to set a custom path to the
@@ -163,7 +164,10 @@ unsigned int active_alloc;  /* The result of calling the `alloc_nr()` macro */
  */
 #define DEFAULT_DB_ENVIRONMENT ".dircache/objects"
 
-/* These macros are used to calculate the size of a cache_entry. */
+/*
+ * These macros are used to calculate the size to be allocated to a cache 
+ * entry. 
+ */
 #define cache_entry_size(len) ((offsetof(struct cache_entry, name) \
                                 + (len) + 8) & ~7)
 #define ce_size(ce) cache_entry_size((ce)->namelen)
@@ -175,8 +179,10 @@ unsigned int active_alloc;  /* The result of calling the `alloc_nr()` macro */
  */
 #define alloc_nr(x) (((x)+16)*3/2)
 
+/* The following are declarations of external functions. */
+
 /*
- * Reads the contents of the `.dircache/index` file into the `active_cache` 
+ * Read the contents of the `.dircache/index` file into the `active_cache` 
  * array. 
 */
 extern int read_cache(void);
