@@ -73,19 +73,18 @@
    -S_ISDIR(mode): Determines whether a file is a directory based
                    on its `mode`. Sourced from <sys/stat.h>.
 
-   -fprintf(stream, message): Place `message` on the named output
+   -fprintf(stream, message): Write `message` to the named output
                               `stream`. Sourced from <stdio.h>.
 
    -stderr: The stadard error stream. Sourced from <stdio.h>.
 
    -DEFAULT_DB_ENVIRONMENT: Constant string (defined via macro in
-                            <cache.h>) used to customize the name
-                            of object store.
+                            <cache.h>) with the default name of the 
+                            object store.
 
    -strlen(string): Return the length of `string`.
 
-   -errno: Error number of last error.
-           Sourced from <errno.h>.
+   -errno: Error number of last error. Sourced from <errno.h>.
 
    -EEXIST: Error macro indicating that an existing file was
             specified in a context where it only makes sense
@@ -99,9 +98,9 @@
                        by s2 into the object pointed to by s1.
                        Sourced from <string.h>.
 
-   -sprintf(s, message): Place output followed by the null byte,
-                         '\0', in consecutive bytes starting at s.
-                         Sourced from <stdio.h>.
+   -sprintf(s, message): Writes `message` string constant to string variable 
+                         `s` followed by the null character '\0'. Sourced from 
+                         <stdio.h>.
 
    ****************************************************************
 
@@ -232,8 +231,8 @@ int main(int argc, char **argv)
     memcpy(path, sha1_dir, len);
 
     /*
-     * Run this loop 256 times, to create the 256 sub-
-     * directories inside the `.dircache/objects/`
+     * Run this loop 256 times, to create the 256 
+     * subdirectories inside the `.dircache/objects/`
      * directory. Each subdirectory will be named with the
      * the first two digits of a number between 0 and 255 in
      * hexadecimal. Each subdirectory will be used to hold the 
