@@ -75,18 +75,18 @@
                                    object, or typed memory object. Sourced
                                    from <sys/mman.h>.
 
-   -PROT_READ: Flag for the mmap() function `prot` parameter describing
+   -PROT_READ: Flag for the mmap() function's `prot` parameter describing
                the desired memory protection of the mapping. `PROT_READ`
                indicates that pages may be read. Sourced from <sys/mman.h>.
                 
-   -MAP_PRIVATE: Flag for the mmap() function `flags` parameter describing
+   -MAP_PRIVATE: Flag for the mmap() function's `flags` parameter describing
                  the desired memory protection of the mapping. `MAP_PRIVATE`
                  indicates that changes to the mapped data are private to the
                  calling process and should not change the underlying object.
                  Sourced from <sys/mman.h>.
 
    -SHA_CTX: SHA context structure used to store information related to the
-             process of hashing the content. Sourced from <sha.h>.
+             process of hashing the content. Sourced from <openssl/sha.h>.
 
    -close(fd): Deallocate the file descriptor `fd`. The file descriptor `fd` 
                will be made available to subsequent calls to open() or other 
@@ -120,8 +120,8 @@
    -Z_OK: Successful zlib return code. It is equal to 0. Sourced from 
           <zlib.h>.
 
-   -Z_FINISH: Flush value for zlib to specify processing of remaining input. 
-              It is equal to 4. Sourced from <zlib.h>.
+   -Z_FINISH: Flush value for zlib that specifies processing of remaining 
+              input. It is equal to 4. Sourced from <zlib.h>.
 
    -deflateEnd(z_stream): All dynamically allocated data structures for
                           `z_stream` are freed. Sourced from <zlib.h>.
@@ -130,8 +130,8 @@
                            <openssl/sha.h>. 
 
    -SHA1_Update(SHA_CTX *c, const void *data, 
-                size_t len): Can be called repeatedly with chunks of the 
-                             message to be hashed (len bytes from data). 
+                size_t len): Can be called repeatedly to calculate the hash
+                             value of chunks of data (len bytes from data). 
                              Sourced from <openssl/sha.h>.
 
    -SHA1_Final(unsigned char *md, 
@@ -140,7 +140,7 @@
                             and erases the SHA_CTX. Sourced from 
                             <openssl/sha.h>.
 
-   -stat: Structure to be returned by stat() function. Holds info
+   -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
 
    -open(path): Establishes the connection between a file and a file
@@ -165,10 +165,10 @@
 
    -fstat(fd, buf): Obtain information about an open file associated with the 
                     file descriptor `fd` and write it to the area pointed to 
-                    by `buf` which is a `stat` struct. Sourced from 
-                    <sys/stat.h>.
+                    by `buf`, which is a pointer to a `stat` structure. 
+                    Sourced from <sys/stat.h>.
 
-   -strlen(string): Return the length of `string`.
+   -strlen(string): Return the length of `string` in bytes.
 
    -memcpy(s1, s2, n): Copy n bytes from the object pointed to
                        by s2 into the object pointed to by s1.
@@ -184,7 +184,7 @@
                             object of specified type to its specified member, 
                             including padding if any. Sourced from <stddef.h>.
 
-   -perror(message): Write `message` to standard error output.
+   -perror(message): Write `message` to standard error stream.
                      Sourced from <stdio.h>.
 
    -O_RDWR: Flag for the open() function indicating to open the file for

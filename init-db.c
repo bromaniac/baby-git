@@ -57,18 +57,17 @@
                        permissions derived from `mode`. Sourced
                        from <sys/stat.h>.
 
-   -perror(message): Write `message` to standard error output.
+   -perror(message): Write `message` to standard error stream.
                      Sourced from <stdio.h>.
 
    -exit(status): Stop execution of the program and exit with code
                   `status`. Sourced from <stdlib.h>.
 
-   -stat: Structure to be returned by stat() function. Holds info
+   -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
 
-   -stat(name, buf): Returns a stat object containing info about
-                     file `name` and store it in the area pointed
-                     to by `buf`.
+   -stat(name, buf): Obtain information about file `name` and store it in the 
+                     area pointed to by `buf`.
                       
    -S_ISDIR(mode): Determines whether a file is a directory based
                    on its `mode`. Sourced from <sys/stat.h>.
@@ -82,7 +81,7 @@
                             <cache.h>) with the default name of the 
                             object store.
 
-   -strlen(string): Return the length of `string`.
+   -strlen(string): Return the length of `string` in bytes.
 
    -errno: Error number of last error. Sourced from <errno.h>.
 
@@ -124,7 +123,7 @@
           represent the first two numbers of the SHA1 hashes
           of the objects to be stored in that subdirectory.
 
-   -len: The length of string in the `sha1_dir` variable.
+   -len: The length of the constant string in the `sha1_dir` variable.
 
    -i: For loop counter used to create subdirectories in object
        store.

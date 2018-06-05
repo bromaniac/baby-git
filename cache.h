@@ -144,6 +144,11 @@ struct cache_entry {
     unsigned char name[0];    /* The filename or path. */
 };
 
+/*
+ * The following are declarations of external variables. They are defined in
+ * the source code read-cache.c.
+ */
+
 /* The path to the object store. */
 const char *sha1_file_directory; 
 /* An array of pointers to cache entries. */
@@ -179,7 +184,10 @@ unsigned int active_alloc;  /* The result of calling the `alloc_nr()` macro */
  */
 #define alloc_nr(x) (((x)+16)*3/2)
 
-/* The following are declarations of external functions. */
+/*
+ * The following are function prototypes. They are defined in the source file
+ * read-cache.c.
+ */
 
 /*
  * Read the contents of the `.dircache/index` file into the `active_cache` 
@@ -210,7 +218,7 @@ extern int get_sha1_hex(char *hex, unsigned char *sha1);
 /* Linus Torvalds: static buffer! */
 extern char *sha1_to_hex(unsigned char *sha1);
 
-/* Print usage message to the command line. */
+/* Print usage message to standard error stream. */
 extern void usage(const char *err);
 
 #endif /* Linus Torvalds: CACHE_H */
