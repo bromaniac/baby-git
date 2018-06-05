@@ -201,8 +201,8 @@
    -sha1_file_directory: The path to the object store.
 
    -active_cache: An array of pointers to cache entries representing the 
-                  current set of content that will be cached to file or which
-                  have been retrieved from the cache file. 
+                  current set of content that will be cached to file or that
+                  has been retrieved from the cache file. 
 
    -active_nr: The number of cache entries in the active_cache array.
 
@@ -218,19 +218,19 @@
    -hexval(): Convert a hexadecimal character to its decimal representation.
 
    -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
-                    SHA1 value to the equivalent 20-byte array decimal
+                    SHA1 hash value to the equivalent 20-byte decimal 
                     representation.
 
-   -sha1_to_hex(): Convert a 20-byte array decimal representation of an SHA1 
-                   hash value to the equivalent 40-character hexadicimal 
+   -sha1_to_hex(): Convert a 20-byte decimal representation of an SHA1 hash
+                   value to the equivalent 40-character hexadicimal 
                    representation.
 
    -sha1_file_name(): Build the path of an object in the object database
-                      using the object's SHA1 value.
+                      using the object's SHA1 hash value.
 
-   -read_sha1_file(): Locate an object in the object database, inflate it,
-                      then return the inflated object data (without the 
-                      prepended metadata).
+   -read_sha1_file(): Locate an object in the object database, read and 
+                      inflate it, then return the inflated object data 
+                      (without the prepended metadata).
 
    -write_sha1_file(): Deflate the buffer content, calculate the hash value,
                        then call the write_sha1_buffer function to write the
@@ -251,7 +251,7 @@
 const char *sha1_file_directory = NULL; 
 /*
  * An array of pointers to cache entries representing the current set of 
- * content that will be cached to file or which have been retrieved from the 
+ * content that will be cached to file or that has been retrieved from the 
  * cache file. 
  */
 struct cache_entry **active_cache = NULL; 
@@ -264,7 +264,7 @@ unsigned int active_alloc = 0;
  * Function: `usage`
  * Parameters:
  *      -err: Error message to display.
- * Purpose: Display an error message when reading the cache fails.
+ * Purpose: Display an error message.
  */
 void usage(const char *err)
 {
@@ -275,7 +275,7 @@ void usage(const char *err)
 /* Function: `hexval`
  * Parameters:
  *      -c: Hexadecimal character to convert to decimal.
- * Purpose: Convert a hexadecimal character to it's decimal representation.
+ * Purpose: Convert a hexadecimal character to its decimal representation.
  */
 static unsigned hexval(char c)
 {
@@ -291,26 +291,40 @@ static unsigned hexval(char c)
     if (c >= 'A' && c <= 'F')
         return c - 'A' + 10;
 
-    /* Return bitwise 'not' of 0, which is 1, this indicates that `c` was not hex, i.e. failure. */
+    /*
+     * Return bitwise 'not' of 0, which is 1. This indicates that `c` was not 
+     * a hexadecimal symbol, i.e., failure. 
+     */
     return ~0;
 }
 
 /*
  * Function: `get_sha1_hex`
  * Parameters:
- *      -hex: Hexadecimal string to convert to SHA1 representation.
- *      -sha1: String placeholder to store converted SHA1 value.
- * Purpose: Convert hexadecimal string to SHA1 representation.
+ *      -hex: String containing hexadecimal representation of SHA1 hash value.
+ *      -sha1: Array for storing the decimal representation of the SHA1 hash
+ *             value.
+ * Purpose: Convert a 40-character hexadicimal representation of an SHA1 hash 
+ *          value to the equivalent 20-byte decimal representation.
  */
 int get_sha1_hex(char *hex, unsigned char *sha1)
 {
     int i;
+    /*
+     * Convert each two-digit hexadecimal number (ranging from 00 to ff) to a 
+     * decimal number (ranging from 0 to 255). 
+     */
     for (i = 0; i < 20; i++) {
+        /*
+         * The decimal equivalent of the first hex digit will form the 4 high 
+         * bits of val; that of the second hex digit will form the 4 low bits.
+         */
         unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
+        /* Return -1 if val is larger than 255. */
         if (val & ~0xff)
             return -1;
-        *sha1++ = val;
-        hex += 2;
+        *sha1++ = val;   /* Store val in sha1 array. */
+        hex += 2;        /* Get next two-diget hexadiceimal number. */
     }
     return 0;
 }
@@ -318,151 +332,225 @@ int get_sha1_hex(char *hex, unsigned char *sha1)
 /*
  * Function: `sha1_to_hex`
  * Parameters:
- *      -sha1: SHA1 to convert to hexadecimal representation.
- * Purpose: Convert SHA1 string to hexadecimal representation.
+ *      -sha1: Array containing decimal representation of SHA1 hash value.
+ * Purpose: Convert a 20-byte decimal representation of an SHA1 hash value to 
+ *          the equivalent 40-character hexadicimal representation.
  */
-char * sha1_to_hex(unsigned char *sha1)
+char *sha1_to_hex(unsigned char *sha1)
 {
+    /* String for storing the 40-character hexadicimal representation. */
     static char buffer[50];
+    /* Lookup array for converting a hexadecimal symbol to decimal. */
     static const char hex[] = "0123456789abcdef";
+    /* Pointer used for filling up the buffer string. */
     char *buf = buffer;
     int i;
 
+    /*
+     * Convert each decimal number (ranging from 0 to 255) to a two-digit 
+     * hexadecimal number (ranging from 00 to ff). 
+     */
     for (i = 0; i < 20; i++) {
-        unsigned int val = *sha1++;
-        *buf++ = hex[val >> 4];
-        *buf++ = hex[val & 0xf];
+        unsigned int val = *sha1++;   /* Get the current decimal number. */
+        *buf++ = hex[val >> 4];       /* Convert the 4 high bits to hex. */
+        *buf++ = hex[val & 0xf];      /* Convert the 4 low bits to hex. */
     }
-    return buffer;
+    return buffer;   /* Return the hexadecimal representation. */
 }
 
 /*
- * Linus Torvalds: NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do a "strdup()" if you need to save the
+ * Linus Torvalds: NOTE! This returns a statically allocated buffer, so you 
+ * have to be careful about using it. Do a "strdup()" if you need to save the
  * filename.
  */
 
 /*
  * Function: `sha1_file_name`
  * Parameters:
- *      -sha1: The SHA1 used to identify the file in the object store.
- * Purpose: Return the file name (path and filename) of a file in the object store.
+ *      -sha1: The SHA1 hash value used to identify the object in the object 
+ *             store.
+ * Purpose: Build the path of an object in the object database using the 
+ *          object's SHA1 hash value.
  */
 char *sha1_file_name(unsigned char *sha1)
 {
     int i;
+    /* `base` is a character array for storing the path to an object in the
+     * object database. `name` is a pointer to the byte in `base` that is
+     * after the object database path plus `/`.
+     */
     static char *name, *base;
 
+    /* If base has not been set. */
     if (!base) {
-        char *sha1_file_directory = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
+        /* Get the path to the object database. */
+        char *sha1_file_directory 
+                 = getenv(DB_ENVIRONMENT) ? : DEFAULT_DB_ENVIRONMENT;
+        /* The length of the path. */
         int len = strlen(sha1_file_directory);
+        /* Allocate space for the base string. */
         base = malloc(len + 60);
+        /* Copy the object database path to the base string. */
         memcpy(base, sha1_file_directory, len);
+        /* Initialize the rest of the base string to contain null bytes. */
         memset(base+len, 0, 60);
+        /* Write a slash after the sha1_file_directory path. */
         base[len] = '/';
+        /*
+         * Write a slash to separate the two-character object directory from
+         * the object filename.
+         */
         base[len+3] = '/';
+        /* Set name to point to the byte after the first slash above. */
         name = base + len + 1;
     }
+    /*
+     * Fill in the rest of the object path (object directory and filename)
+     * using the object's SHA1 hash value.
+     *
+     * Convert each decimal number (ranging from 0 to 255) to a two-digit 
+     * hexadecimal number (ranging from 00 to ff).  The first two-digit
+     * hexadecimal number will form part of the object directory.  The rest of 
+     * two-digit hexadecimal numbers will comprise the object filename. 
+     */
     for (i = 0; i < 20; i++) {
+        /* Lookup array for converting a hexadecimal symbol to decimal. */
         static char hex[] = "0123456789abcdef";
+        /* Get the current decimal number. */
         unsigned int val = sha1[i];
+        /*
+         * Set the index of the base array. This will be name + 0, name + 3,
+         * name + 5, name + 7,..., name + 39.
+         */
         char *pos = name + i*2 + (i > 0);
-        *pos++ = hex[val >> 4];
-        *pos = hex[val & 0xf];
+        *pos++ = hex[val >> 4];   /* Convert the 4 high bits to hex. */
+        *pos = hex[val & 0xf];    /* Convert the 4 low bits to hex. */
     }
-    return base;
+    return base;   /* Return the path to the object. */
 }
 
 /*
  * Function: `read_sha1_file`
  * Parameters:
- *      -sha1: SHA1 that identifies the file to read from the object store.
- *      -type: The type of the file to be read in.
- *      -size: The size in bytes of the file to be read in.
- * Purpose: Read in a file from the object store identified by it's SHA1.
+ *      -sha1: SHA1 hash value of an object.
+ *      -type: The type of the object to be read in (blob, tree, or commit).
+ *      -size: The size in bytes of the object data.
+ * Purpose: Locate an object in the object database, read and inflate it, then 
+ *          return the inflated object data (without the prepended metadata).
  */
-void * read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
+void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 {
-    z_stream stream; /* Declare zlib compression stream. */
-    char buffer[8192]; /* Character array to hold file content. */
-    struct stat st; /* The `stat` object to hold file info of the file to be read. */
-    int i; /* Not used. Even almighty Linux makes mistakes. */
-        int fd; /* File descriptor: Integer to be associated with the file to be read. */
-        int ret;
-        int bytes;
+    z_stream stream;     /* Declare zlib stream. */
+    char buffer[8192];   /* Buffer for zlib inflated output. */
+    struct stat st;      /* `stat` structure for storing file information. */
+    int i;               /* Not used. Even almighty Linux makes mistakes. */
+    int fd;              /* File descriptor to be associated with the */
+                         /* object to be read. */
+    int ret;
+    int bytes;
+    /*
+     * `map` is a pointer to an object's mapped contents. `buf` is a pointer
+     * to inflated object data.
+     */
     void *map, *buf;
-    char *filename = sha1_file_name(sha1); /* Get the name of the file to be read in, identified by the passed-in SHA1. */
+    /*
+     * Build the path of an object in the object database using the object's 
+     * SHA1 hash value.
+     */
+    char *filename = sha1_file_name(sha1); 
 
     /*
-     * Associate a file descriptor with the file in the object store.
-     * If the returned value is < 0, there was an error reading the file.
+     * Associate a file descriptor with the object. If the returned value 
+     * is < 0, there was an error reading the file.
      */
-        #ifndef BGIT_WINDOWS
-        fd = open(filename, O_RDONLY );
-        #else
-        fd = open(filename, O_RDONLY | O_BINARY );
-        #endif
+    #ifndef BGIT_WINDOWS
+    fd = open(filename, O_RDONLY );
+    #else
+    fd = open(filename, O_RDONLY | O_BINARY );
+    #endif
     if (fd < 0) {
         perror(filename);
         return NULL;
     }
 
     /*
-     * Get the file's info and release the file descriptor if there was an error.
+     * Get the file information. Release the file descriptor if there was an 
+     * error.
      */
     if (fstat(fd, &st) < 0) {
         close(fd);
         return NULL;
     }
 
-  /* Set up memory location to store the contents of the file to be added to cache. */
-        #ifndef BGIT_WINDOWS
-        map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (-1 == (int)(long)map) /* Return NULL (failure) if mmap failed. */
+    /* Map contents of the object to memory. */
+    #ifndef BGIT_WINDOWS
+    map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (-1 == (int)(long)map)   /* Return NULL (failure) if mmap failed. */
         return NULL;
-        #else
-        void *fhandle = CreateFileMapping( (HANDLE) _get_osfhandle(fd), NULL, 
-                            PAGE_READONLY, 0, 0, NULL );
-        if (!fhandle)
-            return NULL;
-        map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, st.st_size );
-        CloseHandle( fhandle );
-        if (map == (void *) NULL)
-            return NULL;
-        #endif
-        close(fd); /* Release the file descriptor for future use. */
+    #else
+    void *fhandle = CreateFileMapping( (HANDLE) _get_osfhandle(fd), NULL, 
+                                       PAGE_READONLY, 0, 0, NULL );
+    if (!fhandle)
+        return NULL;
+    map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, st.st_size );
+    CloseHandle( fhandle );
+    if (map == (void *) NULL)
+        return NULL;
+    #endif
+    close(fd);   /* Release the file descriptor. */
 
-    /*  
-     * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.
+    /* Initialize the zlib stream to contain null characters. */
+    memset(&stream, 0, sizeof(stream));
+    /* Set map as location of first addition to the input inflation stream. */
+    stream.next_in = map; 
+    /* Number of bytes available for next inflation. */
+    stream.avail_in = st.st_size; 
+    /* Set `buffer` as the location to write the next inflated output. */
+    stream.next_out = buffer; 
+    /* Number of bytes available for the next inflated output. */
+    stream.avail_out = sizeof(buffer); 
+
+    /* Initialize the stream for decompression. */
+    inflateInit(&stream); 
+    /* Decompress the object contents and store return code in `ret`. */
+    ret = inflate(&stream, 0); 
+
+    /*
+     * Read the object type and size of the object data from the buffer and
+     * store them in variables type and size, respectively.  Return NULL if 
+     * the two conversions were not successful.
      */
-        memset(&stream, 0, sizeof(stream));
-    stream.next_in = map; /* Set mmap'ed location as the first addition to the compression stream. */
-    stream.avail_in = st.st_size; /* Allow size of object store file to be added to the stream. */
-    stream.next_out = buffer; /* Set the `buffer` as the output destination for the uncompressed file content. */
-    stream.avail_out = sizeof(buffer); /* Set the output size of the stream to the size of the buffer. */
-
-    inflateInit(&stream); /* Initialize the stream for decompression. */
-    ret = inflate(&stream, 0); /* Decompress the file contents and store return code in `ret` */
-
-    /* Add the file type and size to the buffer. Fail if the 2 inputs are not successfully added. */
     if (sscanf(buffer, "%10s %lu", type, size) != 2)
         return NULL;
 
-    bytes = strlen(buffer) + 1; /* The length in bytes of the buffer. */
-    buf = malloc(*size); /* Allocate `size` bytes for `buf`. */
-    if (!buf) /* Error if space could not be allocated. */
+    /*
+     * The size of the buffer up to the first null character, i.e., the size
+     * of the prepended metadata plus the terminating null character.
+     */
+    bytes = strlen(buffer) + 1; 
+    /* Allocate space to `buf` equal to the object data size. */
+    buf = malloc(*size); 
+    /* Error if space could not be allocated. */
+    if (!buf)
         return NULL;
 
+    /*
+     * Copy the inflated object data from buffer to buf, i.e, without the 
+     * prepended metadata (object type and object data size).
+     */
     memcpy(buf, buffer + bytes, stream.total_out - bytes);
+    /* The size of the inflated object data without the prepended metadata. */
     bytes = stream.total_out - bytes;
+    /* Continue inflation if not all data has been inflated. */
     if (bytes < *size && ret == Z_OK) {
         stream.next_out = buf + bytes;
         stream.avail_out = *size - bytes;
         while (inflate(&stream, Z_FINISH) == Z_OK)
             /* Linus Torvalds: nothing */;
     }
+    /* Free all dynamically allocated data structures for the zlib stream. */
     inflateEnd(&stream);
-    return buf;
+    return buf;   /* Return the inflated object data. */
 }
 
 /*
