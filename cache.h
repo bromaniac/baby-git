@@ -28,7 +28,6 @@
  *
  *  cat-file.c, commit-tree.c, init-db.c, read-cache.c, read-tree.c,
  *  show-diff.c, update-cache.c, write-tree.c
- *
  */
 
 /*
@@ -155,8 +154,8 @@ const char *sha1_file_directory;
 struct cache_entry **active_cache; 
 /* The number of entries in the `active_cache` array. */
 unsigned int active_nr; 
-unsigned int active_alloc;  /* The result of calling the `alloc_nr()` macro */
-                            /* macro with `active_nr` as the argument. */
+/* The maximum number of elements the active_cache array can hold. */
+unsigned int active_alloc; 
 
 /*
  * If desired, you can use an environment variable to set a custom path to the

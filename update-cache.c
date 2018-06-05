@@ -356,8 +356,8 @@ static int add_cache_entry(struct cache_entry *ce)
     }
 
     /*
-     * Make sure the `active_cache` array is big enough to hold all
-     * entries. 
+     * Make sure the `active_cache` array has space for the additional cache
+     * entry.
      */
     if (active_nr == active_alloc) {
         active_alloc = alloc_nr(active_alloc);

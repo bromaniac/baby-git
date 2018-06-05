@@ -196,38 +196,52 @@
 
    ****************************************************************
 
-   The following variables and functions are defined locally.
+   The following variables are external variables defined in this file:
 
    -sha1_file_directory: The path to the object store.
 
-   -active_cache: An array of cache_entries representing the current set of 
-                  content being cached/retrieved from cache.
+   -active_cache: An array of pointers to cache entries representing the 
+                  current set of content that will be cached to file or which
+                  have been retrieved from the cache file. 
 
-   -active_nr: The # of cache_entries in the active_cache.
+   -active_nr: The number of cache entries in the active_cache array.
 
-   -active_alloc: The converted # of elements in the active_cache.
+   -active_alloc: The maximum number of elements the active_cache array can 
+                  hold. 
 
-   -usage(): Print a usage message in the event of incorrect usage.
+   ****************************************************************
 
-   -hexval(): Convert a hexadecimal character to it's decimal representation.
+   The following variables and functions are defined locally.
 
-   -get_sha1_hex(): TODO
+   -usage(): Print an error message.
 
-   -sha1_to_hex(): TODO
+   -hexval(): Convert a hexadecimal character to its decimal representation.
 
-   -sha1_file_name(): TODO
+   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+                    SHA1 value to the equivalent 20-byte array decimal
+                    representation.
 
-   -read_sha1_file(): TODO
+   -sha1_to_hex(): Convert a 20-byte array decimal representation of an SHA1 
+                   hash value to the equivalent 40-character hexadicimal 
+                   representation.
 
-   -write_sha1_file(buf, len): Compress file content stored in `buf`, hash 
-                               compressed output, and write to object store.
+   -sha1_file_name(): Build the path of an object in the object database
+                      using the object's SHA1 value.
 
-   -write_sha1_buffer(): Write compressed content to location in object store 
-                         identified by the content's SHA1 hash.
+   -read_sha1_file(): Locate an object in the object database, inflate it,
+                      then return the inflated object data (without the 
+                      prepended metadata).
+
+   -write_sha1_file(): Deflate the buffer content, calculate the hash value,
+                       then call the write_sha1_buffer function to write the
+                       object to the object database.
+
+   -write_sha1_buffer(): Write an object to the object database indexed by the
+                         object's SHA1 hash value.
 
    -error(): Print an error message to the standard error stream.
 
-   -verify_hdr(): Validate a cache_header.
+   -verify_hdr(): Validate a cache header.
 
    -read_cache(): Reads the contents of the `.dircache/index` file into the 
                   `active_cache` array.
@@ -236,13 +250,14 @@
 /* Used to store the path to the object store. */
 const char *sha1_file_directory = NULL; 
 /*
- * An array of cache entries representing the current set of content that will
- * be cached to file or which have been retrieved from the cache file. 
+ * An array of pointers to cache entries representing the current set of 
+ * content that will be cached to file or which have been retrieved from the 
+ * cache file. 
  */
 struct cache_entry **active_cache = NULL; 
 /* The number of cache entries in the active_cache array. */
 unsigned int active_nr = 0; 
-/* The converted number of elements in the active_cache array. */
+/* The maximum number of elements the active_cache array can hold. */
 unsigned int active_alloc = 0; 
 
 /*
