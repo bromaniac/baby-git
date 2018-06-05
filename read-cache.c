@@ -232,12 +232,12 @@
                       inflate it, then return the inflated object data 
                       (without the prepended metadata).
 
-   -write_sha1_file(): Deflate the buffer content, calculate the hash value,
-                       then call the write_sha1_buffer function to write the
+   -write_sha1_file(): Deflate an object, calculate the hash value, then call
+                       the write_sha1_buffer function to write the deflated
                        object to the object database.
 
-   -write_sha1_buffer(): Write an object to the object database indexed by the
-                         object's SHA1 hash value.
+   -write_sha1_buffer(): Write an object to the object database, using the
+                         object's SHA1 hash value as index.
 
    -error(): Print an error message to the standard error stream.
 
@@ -460,8 +460,8 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
     char *filename = sha1_file_name(sha1); 
 
     /*
-     * Associate a file descriptor with the object. If the returned value 
-     * is < 0, there was an error reading the file.
+     * Open the object in the object store and associate `fd` with it. If the 
+     * returned value is < 0, there was an error reading the file.
      */
     #ifndef BGIT_WINDOWS
     fd = open(filename, O_RDONLY );
@@ -485,7 +485,7 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
     /* Map contents of the object to memory. */
     #ifndef BGIT_WINDOWS
     map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (-1 == (int)(long)map)   /* Return NULL (failure) if mmap failed. */
+    if (-1 == (int)(long)map)   /* Return NULL if mmap failed. */
         return NULL;
     #else
     void *fhandle = CreateFileMapping( (HANDLE) _get_osfhandle(fd), NULL, 
@@ -501,13 +501,13 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 
     /* Initialize the zlib stream to contain null characters. */
     memset(&stream, 0, sizeof(stream));
-    /* Set map as location of first addition to the input inflation stream. */
+    /* Set map as location of the next input to the inflation stream. */
     stream.next_in = map; 
-    /* Number of bytes available for next inflation. */
+    /* Number of bytes available as input for next inflation. */
     stream.avail_in = st.st_size; 
     /* Set `buffer` as the location to write the next inflated output. */
     stream.next_out = buffer; 
-    /* Number of bytes available for the next inflated output. */
+    /* Number of bytes available for storing the next inflated output. */
     stream.avail_out = sizeof(buffer); 
 
     /* Initialize the stream for decompression. */
@@ -556,45 +556,68 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 /*
  * Function: `write_sha1_file`
  * Parameters:
- *      -buf: The content to be written to the object store pre-compression.
+ *      -buf: The content to be deflated and written to the object store.
  *      -len: The length in bytes of the content pre-compression.
- * Purpose: Compress file content stored in `buf`, hash compressed output, and write to object store.
+ * Purpose: Deflate an object, calculate the hash value, then call the
+ *          write_sha1_buffer function to write the deflated object to the 
+ *          object database.
  */
 int write_sha1_file(char *buf, unsigned len)
 {
     int size;
     char *compressed;
-    z_stream stream; /* Declare zlib compression stream. */
-    unsigned char sha1[20]; /* Used to store SHA1 hash. */
-    SHA_CTX c; /* Declare SHA context. */
+    z_stream stream;          /* Declare zlib stream. */
+    unsigned char sha1[20];   /* Used to store SHA1 hash. */
+    SHA_CTX c;                /* Declare SHA context. */
 
-    /*
-     * Allocate `sizeof(stream)`'s worth of unsigned char space to the compression stream.
-     */
+    /* Initialize the zlib stream to contain null characters. */
     memset(&stream, 0, sizeof(stream));
 
-    /* Initialize compression stream optimized for compression (as opposed to speed). */
+    /*
+     * Initialize compression stream for optimized compression 
+     * (as opposed to speed). 
+     */
     deflateInit(&stream, Z_BEST_COMPRESSION);
-    size = deflateBound(&stream, len); /* Determine upper bound for content after compression. */
-    compressed = malloc(size); /* Allocate `size` bytes for the compressed content. */
+    /* Determine upper bound on compressed size. */
+    size = deflateBound(&stream, len); 
+    /* Allocate `size` bytes of space to store the next compressed output. */
+    compressed = malloc(size); 
 
-    stream.next_in = buf; /* Read file content into the compression stream. */
-    stream.avail_in = len; /* Allow `len` bytes to be compressed. */
-    stream.next_out = compressed; /* Output the compressed content to `compressed`. */
-    stream.avail_out = size; /* Use the upper bound calculated above as max compression output. */
+    /* Set buf as the location of the next input to the compression stream. */
+    stream.next_in = buf; 
+    /* Number of bytes available as input for next compression. */
+    stream.avail_in = len; 
+    /* Set compressed as the location to write the next compressed output. */
+    stream.next_out = compressed; 
+    /* Number of bytes available for storing the next compressed output. */
+    stream.avail_out = size; 
 
-    while (deflate(&stream, Z_FINISH) == Z_OK) /* Compress the file content. */
+    /* Compress the content of buf, i.e., compress the object. */
+    while (deflate(&stream, Z_FINISH) == Z_OK) 
     /* Linus Torvalds: nothing */;
-    deflateEnd(&stream); /* Free memory structures that were dynamically allocated for compression. */
-    size = stream.total_out; /* Get size of total output of compression stream. */
 
-    SHA1_Init(&c); /* Initialize the SHA context. */
-    SHA1_Update(&c, compressed, size); /* Hash the compressed file content. */
-    SHA1_Final(sha1, &c); /* Set `sha1` to the SHA1 hash of the compressed file content. */
+    /*
+     * Free memory structures that were dynamically allocated for 
+     * compression. 
+     */
+    deflateEnd(&stream); 
+    /* Get size of total compressed output. */
+    size = stream.total_out; 
 
-    /* Write the compressed content to the object store. */
+    /* Initialize the SHA context. */
+    SHA1_Init(&c); 
+    /* Calculate hash of the compressed output. */
+    SHA1_Update(&c, compressed, size); 
+    /* Store the SHA1 hash of the compressed output in `sha1`.  */
+    SHA1_Final(sha1, &c); 
+
+    /* Write the compressed object to the object store. */
     if (write_sha1_buffer(sha1, compressed, size) < 0)
         return -1;
+    /*
+     * Print the 40-character hexadecimal representation of the object's SHA1
+     * hash value.
+     */
     printf("%s\n", sha1_to_hex(sha1));
     return 0;
 }
@@ -602,31 +625,32 @@ int write_sha1_file(char *buf, unsigned len)
 /*
  * Function:`write_sha1_buffer`
  * Parameters:
- *      -sha1: The SHA1 hash of the content to be written into the object store.
- *      -buf:  The actual content to write into the file in the object store.
+ *      -sha1: The SHA1 hash of the deflated object to be written into the 
+ *             object store.
+ *      -buf:  The content to be written to the object store.
  *      -size: The size of the content to be written into the object store.
- *
- * Purpose: Write compressed content to location in object store identified
- *          by the content's SHA1 hash.
+ * Purpose: Write an object to the object database, using the object's SHA1 
+ *          hash value as index.
  */
 int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size)
 {
     /*
-     * Convert the `sha1` to a filename to name the file in the object store.
+     * Build the path of the object in the object database using the object's 
+     * SHA1 hash value.
      */
     char *filename = sha1_file_name(sha1);
-    int i; /* Unused variable. Even Linus Torvalds makes mistakes. */
-    int fd; /* Will be used to store association to the new object store file. */
+    int i;    /* Unused variable. Even Linus Torvalds makes mistakes. */
+    int fd;   /* File descriptor for the file to be written. */
 
-    /* Associate `fd` with a newly created file in the object store to hold the content. */
-        fd = OPEN_FILE(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
+    /* Open a new file in the object store and associate it with `fd`. */
+    fd = OPEN_FILE(filename, O_WRONLY | O_CREAT | O_EXCL, 0666);
 
-    /* Error if failure occurs during file association. */
+    /* Error if failure occurs when opening the file. */
     if (fd < 0)
         return (errno == EEXIST) ? 0 : -1;
 
-    write(fd, buf, size); /* Write the content to the new file in the object store. */
-    close(fd); /* Release the file descriptor for future file associations. */
+    write(fd, buf, size);   /* Write the object to the object store. */
+    close(fd);              /* Release the file descriptor. */
     return 0;
 }
 

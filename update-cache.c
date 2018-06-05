@@ -388,13 +388,13 @@ static int add_cache_entry(struct cache_entry *ce)
 static int index_fd(const char *path, int namelen, struct cache_entry *ce, 
                     int fd, struct stat *st)
 {
-    /* Declare zlib compression stream. */
+    /* Declare zlib stream. */
     z_stream stream;
 
     /* Number of bytes to allocate for next compressed output. */
     int max_out_bytes = namelen + st->st_size + 200; 
 
-    /* Allocate `max_out_bytes` space to `out` variable. */
+    /* Allocate `max_out_bytes` of space to store next compressed output. */
     void *out = malloc(max_out_bytes);
 
     /* Allocate space for file metadata. */
@@ -428,7 +428,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
         return -1;
     #endif
 
-    /* Initialize the compression stream to contain null characters. */
+    /* Initialize the zlib stream to contain null characters. */
     memset(&stream, 0, sizeof(stream));
 
     /*
@@ -442,20 +442,17 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
      */    
     stream.next_in = metadata;   /* Set file metadata as the first addition */
                                  /* to the input compression stream. */
-
     /*
      * Write `blob ` to the `metadata` string, followed by the size of the 
-     * file being added to the cache.  Set the number of bytes available for
-     * next compression to the number of characters written + 1 (for the
-     * terminating null character).
+     * file being added to the cache.  Set the number of bytes available as
+     * input for next compression to the number of characters written + 1 (for 
+     * the terminating null character).
      */
     stream.avail_in = 1 + sprintf(metadata, "blob %lu", 
                                   (unsigned long) st->st_size);
-
     /* Set `out` as the location to write the next compressed output. */
     stream.next_out = out;
-
-    /* Number of bytes available for next compressed output. */
+    /* Number of bytes available for storing the next compressed output. */
     stream.avail_out = max_out_bytes;
 
     /* Compress the data, which so far is just the file metadata. */
@@ -475,13 +472,13 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
      * compression. 
      */
     deflateEnd(&stream);
-    
     /* Initialize the SHA context `c`. */
     SHA1_Init(&c);
-
-    /* Hash the compressed output, which has total size `stream.total_out`. */
+    /*
+     * Calculate the hash of the compressed output, which has total size 
+     * `stream.total_out`. 
+     */
     SHA1_Update(&c, out, stream.total_out); 
-
     /*
      * Store the SHA1 hash of the compressed output in the cache entry's 
      * `sha1` member. 
