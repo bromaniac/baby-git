@@ -474,8 +474,8 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
     }
 
     /*
-     * Get the file information. Release the file descriptor if there was an 
-     * error.
+     * Get the file information and store it in the `st` structure. Release 
+     * the file descriptor if there was an error.
      */
     if (fstat(fd, &st) < 0) {
         close(fd);
@@ -567,7 +567,7 @@ int write_sha1_file(char *buf, unsigned len)
     int size;
     char *compressed;
     z_stream stream;          /* Declare zlib stream. */
-    unsigned char sha1[20];   /* Used to store SHA1 hash. */
+    unsigned char sha1[20];   /* Array to store SHA1 hash. */
     SHA_CTX c;                /* Declare SHA context. */
 
     /* Initialize the zlib stream to contain null characters. */
@@ -675,28 +675,31 @@ static int error(const char * string)
  */
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
 {
-    SHA_CTX c; /* Declare a SHA context. */
-    unsigned char sha1[20]; /* Declare placeholder for SHA1. */
+    SHA_CTX c;                /* Declare a SHA context. */
+    unsigned char sha1[20];   /* Array to store SHA1 hash. */
 
-    /* Ensure the cache_header's signature matches the value defined in <cache.h>. */
+    /*
+     * Ensure the cache_header's signature matches the value defined in 
+     * "cache.h". 
+     */
     if (hdr->signature != CACHE_SIGNATURE)
         return error("bad signature");
 
-    /* Ensure the cache_header was created with the correct version of git. */
+    /* Ensure the cache_header was created with the correct version of Git. */
     if (hdr->version != 1)
         return error("bad version");
-    SHA1_Init(&c); /* Initialize the SHA context `c`. */
 
-    /*
-     *  Hash the cache_header and cache_entries to get the corresponding SHA1 of the content.
-     */
+    /* Initialize the SHA context `c`. */
+    SHA1_Init(&c); 
+
+    /* Calculate the hash of the cache header and cache entries. */ 
     SHA1_Update(&c, hdr, offsetof(struct cache_header, sha1));
     SHA1_Update(&c, hdr+1, size - sizeof(*hdr));
     SHA1_Final(sha1, &c);
 
     /*
-     * Compare the newly generated SHA1 hash to the value stored in the passed-in cache_header.
-     * If it matches, then the cache is valid.
+     * Compare the SHA1 hash calculated above to the SHA1 hash stored in the 
+     * cache header. If they match, then the cache is valid.
      */
     if (memcmp(sha1, hdr->sha1, 20))
         return error("bad header sha1");
@@ -704,34 +707,35 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 }
 
 /*
- * Type: function
- * Returns: integer representing # of active entries (or files) in the `.dircache/index` file.
+ * Function: `read_cache`
  * Parameters: none
- * Purpose: Reads the contents of the `.dircache/index` file into the `active_cache` array.
+ * Purpose: Reads the contents of the `.dircache/index` file into the 
+  8         `active_cache` array.
  */
 int read_cache(void)
 {
-    int fd; /* Use this to store reference to file descriptor. */
-    int  i; /* For loop iteration variable. */
-    struct stat st; /* Store output of `stat` command (file info). */
+    int fd;           /* File descriptor. */
+    int  i;           /* For loop iteration variable. */
+    struct stat st;   /* `stat` structure for storing file information. */
     unsigned long size, offset;
-    void *map; /* Used to store the memory address at which to map the contents of the `.dircache/index` cache file.  */
-    struct cache_header *hdr; /* Declare a point to a cache header as defined in <cache.h>. */
-
     /*
-     * `active_cache` refers to the variable defined at top of this file, which is
-     * always `NULL` when this file runs, so I don't think this error will ever
-     * be triggered.
+     * Used to store the memory address in which to map the contents of the 
+     * `.dircache/index` cache file.  
      */
+    void *map; 
+    /* Declare a pointer to a cache header, as defined in "cache.h". */
+    struct cache_header *hdr; 
+
+    /* Check if active_cache array is already populated. */
     errno = EBUSY;
     if (active_cache) 
         return error("more than one cachefile");
 
     /*
-     * Get the path to the object store by first checking if anything is stored
-     * in the `DB_ENVIRONMENT` environment variable, and if not just using the
-     * default `DEFAULT_DB_ENVIRONMENT` which is `.dircache/objects`. Then check
-     * to make sure we have filesystem access to the directory.
+     * Get the path to the object store by first checking if anything is 
+     * stored in the `DB_ENVIRONMENT` environment variable. If not use the 
+     * default path specified in `DEFAULT_DB_ENVIRONMENT`, which is 
+     * `.dircache/objects`. Then check if the directory can be accessed.
      */
     errno = ENOENT;
     sha1_file_directory = getenv(DB_ENVIRONMENT);
@@ -741,14 +745,18 @@ int read_cache(void)
         return error("no access to SHA1 file directory");
 
     /*
-     * Associate the file descriptor `fd` (just an integer) with the
-     * `.dircache/index` file, i.e. the current cache.
+     * Open the `.dircache/index` cache file and associate it with the `fd` 
+     * file * descriptor (just an integer).
      */
-        #ifndef BGIT_WINDOWS
-        fd = open(".dircache/index", O_RDONLY );
-        #else
-        fd = open(".dircache/index", O_RDONLY | O_BINARY );
-        #endif
+    #ifndef BGIT_WINDOWS
+    fd = open(".dircache/index", O_RDONLY );
+    #else
+    fd = open(".dircache/index", O_RDONLY | O_BINARY );
+    #endif
+    /*
+     * Return if file does not exist or if there was an error opening the
+     * file.
+     */
     if (fd < 0)
         return (errno == ENOENT) ? 0 : error("open failed");
 
@@ -757,103 +765,108 @@ int read_cache(void)
      * reference to an always invalid memory location that would not be
      * able to be returned in the event of successful operation.
      */
-        #ifndef BGIT_WINDOWS
+    #ifndef BGIT_WINDOWS
     map = (void *)-1;
-        #else
+    #else
     map = (void *) NULL;
-        #endif
+    #endif
 
     /*
-     * Populate the `st` variable with the output of `fstat()` operating on
-     * the file reference `fd` defined above. Run the if statement if the
-     * `fstat()` returns 0 (i.e. is successful).
+     * Get the cache file information and store it in the `st` stat structure.
+     * Execute the `if` block if the `fstat()` command returns 0, i.e., is 
+     * successful.
      */
     if (!fstat(fd, &st)) {
         map = NULL;
 
         /*
-         * Set `size` equal the `st_size` member of `st`, which is equal to
-         * the size of the `.dircache/index` file in bytes.
+         * Set `size` equal to the `st_size` member of the `st` structure, 
+         * which is the size of the `.dircache/index` file in bytes.
          */
         size = st.st_size;
 
-        errno = EINVAL; /* Preset the error code to be returned if an error occurs. */
+        /*
+         * Preset the error code to be returned to invalid argument if an 
+         * error occurs. 
+         */
+        errno = EINVAL; 
 
         /*
          * Check to make sure the size of the returned index file is greater
-         * than the size of the `cache_header` struct. This must be true for
-         * a valid cache since it must be made up of a `cache_header` and at
-         * least 1 `cache_entry`.
+         * than the size of the `cache_header` structure. This must be true 
+         * for a valid cache since it must be made up of a cache header and 
+         * at least one cache entry.
          */
         if (size > sizeof(struct cache_header)) {
             /*
              * Read the `.dircache/index` file's content into memory locaiton
              * referenced by `map`. Think of this as just a way to read in the
-             * content stored in the cache into memory, so that it can be
+             * content stored in the cache into memory so that it can be
              * accessed by this program. for more details on `mmap()` see:
              *
-             * -http://pubs.opengroup.org/onlinepubs/009695399/functions/mmap.html
-             * -https://stackoverflow.com/questions/258091/when-should-i-use-mmap-for-file-access
+             * http://pubs.opengroup.org/onlinepubs/009695399/functions/
+             * mmap.html
+             * https://stackoverflow.com/questions/258091/
+             * when-should-i-use-mmap-for-file-access
              */
-                    #ifndef BGIT_WINDOWS
+            #ifndef BGIT_WINDOWS
             map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-                    #else
-                    void *fhandle 
-                        = CreateFileMapping( (HANDLE) _get_osfhandle(fd), 
-                              NULL, PAGE_READONLY, 0, 0, NULL );
-                    if (!fhandle)
-                        return error("CreateFileMapping failed");
-                    map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, size );
-                    CloseHandle( fhandle );
-                    #endif
-                }
+            #else
+            void *fhandle 
+                = CreateFileMapping( (HANDLE) _get_osfhandle(fd), 
+                                     NULL, PAGE_READONLY, 0, 0, NULL );
+            if (!fhandle)
+                return error("CreateFileMapping failed");
+            map = MapViewOfFile( fhandle, FILE_MAP_READ, 0, 0, size );
+            CloseHandle( fhandle );
+            #endif
+        }
     }
 
-    /*
-     * Deallocate the integer used by file descriptor `fd` so that it is available for future
-     * calls to `open()`. For example if `fd` = 1, the number 1 will be freed up to be mapped
-     * future files.
-     */
+    /* Deallocate the file descriptor `fd`. */
     close(fd);
 
-    /* Return an error in the event of `mmap()` failure to map the file to memory. */
-        #ifndef BGIT_WINDOWS
+    /*
+     * Return an error in the event `mmap()` fails to map the file to 
+     * memory. 
+     */
+    #ifndef BGIT_WINDOWS
     if (-1 == (int)(long)map)
         return error("mmap failed");
-        #else
+    #else
         if (map == (void *) NULL)
             return error("MapViewOfFile failed");
-        #endif
+    #endif
 
     /*
-     * Point the `hdr` cache header pointer to the memory address where the `.dircache/index`
-     * file's contents were mapped. Then run `verify_hdr()` to validate that the cache file
-     * contains a valid header.  See `verify_hdr()` function above in this file to see how this
-     * works. If the header is not valid, the code jumps to the `unmap` code at the end of this file.
+     * Set the `hdr` cache header pointer to point to the memory address where 
+     * the `.dircache/index` file's contents were mapped. Then call 
+     * `verify_hdr()` to validate that the cache header. If the header is not 
+     * valid, the code jumps to the `unmap` label at the end of this file.
      */
     hdr = map;
     if (verify_hdr(hdr, size) < 0)
         goto unmap;
 
-    active_nr = hdr->entries; /* The # of cache entries (or files) that exist in the cache. */
-    active_alloc = alloc_nr(active_nr); /* The # of elements to allocate for the `active_cache`. */
+    /* The number of cache entries in the cache. */
+    active_nr = hdr->entries; 
+    /* The maximum number of elements the active_cache array can hold. */
+    active_alloc = alloc_nr(active_nr); 
 
     /*
-     * Allocate memory for the `active_cache`. The memory is allocated for an array of `active_alloc`
-     * elements, each one having the size of a `cache_entry`.
+     * Allocate memory for the `active_cache` array. Memory is allocated for
+     * an array of `active_alloc` number of elements, each one having the size 
+     * of a `cache_entry` structure.
      */
     active_cache = calloc(active_alloc, sizeof(struct cache_entry *));
 
-    /*
-     * This `offset` is used to skip past the header portion of the file content and iterate
-     * over the cache_entries.
-     */
+    /* This `offset` is used to skip past the header portion of the cache. */
     offset = sizeof(*hdr); 
 
     /*
-     * Iterate over the cache_entries, each time increasing the offset by the size of the current
-     * cache_entry. Add each cache_entry into the `active_cache` array, so we end up with an
-     * array of populated cache_entries.
+     * Iterate over the cache entries, each time increasing the offset by the 
+     * size of the current cache entry. Add each cache entry into the 
+     * `active_cache` array.
      */
     for (i = 0; i < hdr->entries; i++) {
         struct cache_entry *ce = map + offset;
@@ -861,19 +874,20 @@ int read_cache(void)
         active_cache[i] = ce;
     }
     
-    /* Return the number of cache_entries in the active_cache. */
+    /* Return the number of cache entries in the cache. */
     return active_nr;
 
 /*
- * This 'unmap' code only runs if the cache header is invalid. In that case, we want to unmap the
- * memory location that is being used to store the file contents, so it doesn't hog up that space. 
+ * The code after the 'unmap' label is only executed if the cache header is 
+ * invalid. In that case, the memory location into which the cache contents
+ * were mapped is unmapped to prevent memory leaks.
  */
 unmap:
-        #ifndef BGIT_WINDOWS
+    #ifndef BGIT_WINDOWS
     munmap(map, size);
-        #else
-        UnmapViewOfFile( map );
-        #endif
+    #else
+    UnmapViewOfFile( map );
+    #endif
     errno = EINVAL;
     return error("verify header failed");
 }
