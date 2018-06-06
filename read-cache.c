@@ -823,7 +823,11 @@ int read_cache(void)
         }
     }
 
-    /* Deallocate the file descriptor `fd`. */
+    /*
+     * Deallocate the file descriptor `fd` so that it is available for future
+     * calls to `open()`. For example, if fd = 1, the file descriptor 1 will 
+     * be deallocated and be made avaliable to refer to files. 
+     */
     close(fd);
 
     /*
