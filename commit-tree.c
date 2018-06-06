@@ -52,105 +52,104 @@
  */
 
 #include "cache.h"
-/*  The above 'include' allows use of the following functions and
-    variables from <cache.h> header file, ranked in order of first use
-    in this file. Most are functions/macros from standard C libraries
-    that are `#included` in <cache.h>. Function names are followed by
-    parenthesis whereas variable/struct names are not:
+/* The above 'include' allows use of the following functions and
+   variables from "cache.h" header file, ranked in order of first use
+   in this file. Most are functions/macros from standard C libraries
+   that are `#included` in "cache.h". Function names are followed by
+   parenthesis whereas variable/struct names are not:
 
-	-malloc(size): Allocate unused space for an object whose
-                   size in bytes is specified by `size` and whose
-                   value is unspecified. Sourced from <stdlib.h>.
+   -malloc(size): Allocate unused space for an object whose size in bytes is 
+                  specified by `size` and whose value is unspecified. Sourced 
+                  from <stdlib.h>.
 
-    -memset(void *s, int c, size_t n): Copies `c` (converted to an unsigned
-                                       char) into each of the first `n` bytes
-                                       of the object pointed to by `s`.
+   -memset(void *s, int c, size_t n): Copies `c` (converted to an unsigned
+                                      char) into each of the first `n` bytes
+                                      of the object pointed to by `s`.
 
-	-va_start(va_list ap, parm_n): Macro enabling access to the variable
-								   arguments following the named argument.
+   -va_start(va_list ap, last): In a function with a variable argument list,
+                                this macro initializes the variable `ap` to
+                                point to the first unnamed argument after the
+                                `last` named argument.
 
-    -vsnprintf(char *s, size_t n, const char *format, va_list arg):
-        Composes a string with the same text that would be printed if format
-        was used on printf, but using the elements in the variable argument
-        list identified by `arg` instead of additional function arguments and
-        storing the resulting content as a string in the buffer pointed by
-        `s` (taking `n` as the maximum buffer capacity to fill).
+   -vsnprintf(char *s, size_t n, const char *format, va_list arg):
+       Construct `format` using the variable argument list `arg` and write the 
+       formatted string into `s`, with `n` specifying the maximum number of
+       characters that can be written to `s`, including the null terminating
+       character.
 
-	-va_end(va_list ap): Marco that performs cleanup for an ap object
-						 initialized by a call to va_start().
+   -va_end(va_list ap): Marco that performs cleanup for a va_list object that
+                        was initialized through a call to va_start().
 
-	-realloc(pointer, size): Update the size of the memory object pointed
-                             to by `pointer` to `size`. Sourced from <stdlib.h>.
+   -realloc(pointer, size): Update the size of the memory object pointed to by
+                            `pointer` to `size`. Sourced from <stdlib.h>.
 
-    -memcpy(s1, s2, n): Copy n bytes from the object pointed to
-                        by s2 into the object pointed to by s1.
+   -memcpy(s1, s2, n): Copy n bytes from the object pointed to by s2 into the 
+                       object pointed to by s1.
 
-	-strlen(string): Return the length of `string` in bytes.
+   -strlen(string): Return the length of `string` in bytes.
 
-    -get_sha1_hex(): Convert the SHA1 passed in as a command line
-                     argument to the proper hexadecimal format.
-                     Sourced from <cache.h> and defined in
-                     <read-cache.c>.
+   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+                    SHA1 hash value to the equivalent 20-byte decimal 
+                    representation.
 
-    -usage(): Print a usage message in the event of incorrect usage.
-              Sourced from <cache.h>.
+   -usage(): Print an error message.
 
-    -strcmp(s1, s2): Compares the string pointed to by `s1` to the
-                     string pointed to by `s2`.
+   -strcmp(s1, s2): Compares the string pointed to by `s1` to the string 
+                    pointed to by `s2`.
 
-    -fprintf(stream, message): Place `message` on the named output
-                               `stream`. Sourced from <stdio.h>.
+   -fprintf(stream, message, ...): Write `message` to the output `stream`.
+                                   Sourced from <stdio.h>.
 
-    -getuid(): Return the real user ID of the calling process.
+   -getuid(): Returns the real user ID of the calling process.
 
-    -getpwuid(): Search the user database for an entry with a matching uid.
+   -getpwuid(uid): Returns a pointer to a structure that contains information
+                   about the user with user ID `uid`.
 
-    -gethostname(name, namelen): Return the standard host name for the
-                                 current machine.
+   -gethostname(name, namelen): Return the standard host name for the
+                                current machine.
 
-    -time(time_t *tloc): Return the value of time in seconds since the Epoch.
+   -time(time_t *tloc): Return the value of time in seconds since the Epoch.
 
-    -ctime(const time_t *clock): Convert time value to a date and time string.
+   -ctime(const time_t *clock): Convert time value to a date and time string.
 
-    -getenv(name): Get value of the environment variable `name`.
-                   Sourced from <stdlib.h>.
+   -getenv(name): Get value of the environment variable `name`.
+                  Sourced from <stdlib.h>.
 
-    -sha1_to_hex: TODO
+   -sha1_to_hex: TODO
 
-    -fgets(char *restrict s, int n, FILE *restrict stream):
-        Read bytes from `stream` into the array pointed to by `s`, until `n`-1
-        bytes are read, or a <newline> is read and transferred to `s`, or an
-        end-of-file condition is encountered. The string is then terminated with
-        a null byte.
+   -fgets(char *restrict s, int n, FILE *restrict stream):
+       Read bytes from `stream` into the array pointed to by `s`, until `n`-1
+       bytes are read, or a <newline> is read and transferred to `s`, or an
+       end-of-file condition is encountered. The string is then terminated with
+       a null byte.
 
-    -sizeof(datatype): Generates the size of a variable or datatype,
-                       measured in the number of char size storage
-                       units required for the type.
+   -sizeof(datatype): Generates the size of a variable or datatype,
+                      measured in the number of char size storage
+                      units required for the type.
 
-    -write_sha1_file(buf, len): Compress file content stored in `buf`, hash
-                                compressed output, and write to object store.
+   -write_sha1_file(buf, len): Compress file content stored in `buf`, hash
+                               compressed output, and write to object store.
 
-****************************************************************
+   ****************************************************************
 
-The following variables and functions are defined locally.
+   The following variables and functions are defined in this source file.
 
-    -main(): The main function runs each time the ./commit-tree
-             command is run.
+   -main(): The main function runs each time the ./commit-tree
+            command is run.
 
-    -init_buffer(): Allocate memory and offset size for buffer.
+   -init_buffer(): Allocate memory and offset size for buffer.
 
-    -add_buffer(): Adds a line of content into the buffer to be committed into
-                   the object store.
+   -add_buffer(): Adds a line of content into the buffer to be committed into
+                  the object store.
 
-    -prepend_integer(): Populate the buffer offset.
+   -prepend_integer(): Populate the buffer offset.
 
-    -finish_buffer(): Final prep for the buffer so that the new commit ready
-                      to be added to object store.
+   -finish_buffer(): Final prep for the buffer so that the new commit ready
+                     to be added to object store.
 
-    -ORIG_OFFSET: The default offset for the buffer to be committed.
+   -ORIG_OFFSET: The default offset for the buffer to be committed.
 
-    -BLOCKING: The initial memory size to allocate for the buffer.
-
+   -BLOCKING: The initial memory size to allocate for the buffer.
 */
 
 #ifndef BGIT_WINDOWS
@@ -173,10 +172,10 @@ The following variables and functions are defined locally.
  */
 static void init_buffer(char **bufp, unsigned int *sizep)
 {
-	char *buf = malloc(BLOCKING); /* Allocate memory for buffer. */
-	memset(buf, 0, ORIG_OFFSET); /* Copies '0' (null byte) into first 40 byes of buffer. */
-	*sizep = ORIG_OFFSET; /* Set buffer size to default offset value. */
-	*bufp = buf; /* Set the passed-in buffer. */
+    char *buf = malloc(BLOCKING); /* Allocate memory for buffer. */
+    memset(buf, 0, ORIG_OFFSET); /* Copies '0' (null byte) into first 40 byes of buffer. */
+    *sizep = ORIG_OFFSET; /* Set buffer size to default offset value. */
+    *bufp = buf; /* Set the passed-in buffer. */
 }
 
 /*
@@ -189,31 +188,31 @@ static void init_buffer(char **bufp, unsigned int *sizep)
  */
 static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 {
-	char one_line[2048]; /* Represents a line to add to buffer. */
-	va_list args; /* References variable argument list. */
-	int len; /* Length of variable argument list. */
-	unsigned long alloc, size, newsize; /* Memory sizes. */
-	char *buf; /* The buffer. */
+    char one_line[2048]; /* Represents a line to add to buffer. */
+    va_list args; /* References variable argument list. */
+    int len; /* Length of variable argument list. */
+    unsigned long alloc, size, newsize; /* Memory sizes. */
+    char *buf; /* The buffer. */
 
-	va_start(args, fmt); /* Handle variable argument list. */
+    va_start(args, fmt); /* Handle variable argument list. */
 
     /* Populate `one_line` with the variable argument list parameters. */
-	len = vsnprintf(one_line, sizeof(one_line), fmt, args);
+    len = vsnprintf(one_line, sizeof(one_line), fmt, args);
 
-	va_end(args); /* End parsing variable argument list. */
-	size = *sizep; /* Set passed-in size. */
-	newsize = size + len; /* Combine passed-in size and length of `one_line`. */
-	alloc = (size + 32767) & ~32767; /* Set memory to allocate for the buffer. */
-	buf = *bufp; /* Set passed-in buffer. */
+    va_end(args); /* End parsing variable argument list. */
+    size = *sizep; /* Set passed-in size. */
+    newsize = size + len; /* Combine passed-in size and length of `one_line`. */
+    alloc = (size + 32767) & ~32767; /* Set memory to allocate for the buffer. */
+    buf = *bufp; /* Set passed-in buffer. */
 
     /* If the new buffer size will be greater that default memory to allocate... */
-	if (newsize > alloc) {
-		alloc = (newsize + 32767) & ~32767; /* Increase the size to allocate. */
-		buf = realloc(buf, alloc); /* Updated memory allocated for buffer. */
-		*bufp = buf; /* Set the buffer. */
-	}
-	*sizep = newsize; /* Update buffer size to new value */
-	memcpy(buf + size, one_line, len); /* Copy `one_line` into the buffer. */
+    if (newsize > alloc) {
+        alloc = (newsize + 32767) & ~32767; /* Increase the size to allocate. */
+        buf = realloc(buf, alloc); /* Updated memory allocated for buffer. */
+        *bufp = buf; /* Set the buffer. */
+    }
+    *sizep = newsize; /* Update buffer size to new value */
+    memcpy(buf + size, one_line, len); /* Copy `one_line` into the buffer. */
 }
 
 /*
@@ -226,14 +225,14 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
  */
 static int prepend_integer(char *buffer, unsigned val, int i)
 {
-	buffer[--i] = '\0'; /* Set the ith entry in buffer to the null byte and decrement i. */
+    buffer[--i] = '\0'; /* Set the ith entry in buffer to the null byte and decrement i. */
 
     /* Populate the buffer offset. */
-	do {
-		buffer[--i] = '0' + (val % 10);
-		val /= 10;
-	} while (val);
-	return i;
+    do {
+        buffer[--i] = '0' + (val % 10);
+        val /= 10;
+    } while (val);
+    return i;
 }
 
 /*
@@ -246,21 +245,21 @@ static int prepend_integer(char *buffer, unsigned val, int i)
  */
 static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
 {
-	int taglen; /* The length of the tag. */
-	int offset; /* The buffer offset. */
-	char *buf = *bufp; /* Set the passed-in buffer. */
-	unsigned int size = *sizep; /* Set the passed-in buffer size. */
+    int taglen; /* The length of the tag. */
+    int offset; /* The buffer offset. */
+    char *buf = *bufp; /* Set the passed-in buffer. */
+    unsigned int size = *sizep; /* Set the passed-in buffer size. */
 
     /* Populate buffer offset. */
-	offset = prepend_integer(buf, size - ORIG_OFFSET, ORIG_OFFSET);
-	taglen = strlen(tag); /* Length of tag. */
-	offset -= taglen; /* Decrement offset by taglen. */
-	buf += offset; /* Add offset to buffer. */
-	size -= offset; /* Decrement size by offset. */
-	memcpy(buf, tag, taglen); /* Copy the tag into the buffer. */
+    offset = prepend_integer(buf, size - ORIG_OFFSET, ORIG_OFFSET);
+    taglen = strlen(tag); /* Length of tag. */
+    offset -= taglen; /* Decrement offset by taglen. */
+    buf += offset; /* Add offset to buffer. */
+    size -= offset; /* Decrement size by offset. */
+    memcpy(buf, tag, taglen); /* Copy the tag into the buffer. */
 
-	*bufp = buf; /* Set the final buffer. */
-	*sizep = size; /* Set the final buffer size. */
+    *bufp = buf; /* Set the final buffer. */
+    *sizep = size; /* Set the final buffer size. */
 }
 
 /*
@@ -271,27 +270,27 @@ static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
  */
 static void remove_special(char *p)
 {
-	char c; /* Used to iterate through string characters. */
-	char *dst = p; /* Pointer to the string. */
+    char c; /* Used to iterate through string characters. */
+    char *dst = p; /* Pointer to the string. */
 
     /* Run infinitely until break statement. */
-	for (;;) {
-		c = *p; /* Set `c` to first character in string. */
-		p++; /* Increment pointer to next character. */
+    for (;;) {
+        c = *p; /* Set `c` to first character in string. */
+        p++; /* Increment pointer to next character. */
 
         /* If character is newline or angle bracket, ignore it. */
-		switch(c) {
+        switch(c) {
             case '\n': case '<': case '>':
                 continue;
-		}
+        }
 
         /* Add character to string. */
-		*dst++ = c;
+        *dst++ = c;
 
         /* If we've gone off end of string, end. */
-		if (!c)
-			break;
-	}
+        if (!c)
+            break;
+    }
 }
 
 /*
@@ -314,16 +313,16 @@ static void remove_special(char *p)
  */
 int main(int argc, char **argv)
 {
-	int i; /* For loop counter. */
+    int i; /* For loop counter. */
     int len; /* Used to store the length of the OS user name. */
-	int parents = 0; /* The number of passed-in parent commits. */
-	unsigned char tree_sha1[20]; /* The SHA1 of the tree to be committed. */
-	unsigned char parent_sha1[MAXPARENT][20]; /* An array of passed-in parent commit SHA1 hashes. */
-	char *gecos, *realgecos;
-	char *email, realemail[1000]; /* Used to store the user's email address. */
+    int parents = 0; /* The number of passed-in parent commits. */
+    unsigned char tree_sha1[20]; /* The SHA1 of the tree to be committed. */
+    unsigned char parent_sha1[MAXPARENT][20]; /* An array of passed-in parent commit SHA1 hashes. */
+    char *gecos, *realgecos;
+    char *email, realemail[1000]; /* Used to store the user's email address. */
         size_t hostname_size;
-	char *date, *realdate; /* Used to store the date. */
-	char comment[1000]; /* Used to store the commit message. */
+    char *date, *realdate; /* Used to store the date. */
+    char comment[1000]; /* Used to store the commit message. */
 
         #ifndef BGIT_WINDOWS
             /* The `passwd` struct is used for storing user account information. */
@@ -334,43 +333,43 @@ int main(int argc, char **argv)
             char username[uname_len];
         #endif
 
-	time_t now; /* Used to store the time of the commit. */
-	char *buffer; /* Used to store and build up the content to be added to the new commit before it is written to the object store. */
-	unsigned int size; /* The size of `buffer`. */
+    time_t now; /* Used to store the time of the commit. */
+    char *buffer; /* Used to store and build up the content to be added to the new commit before it is written to the object store. */
+    unsigned int size; /* The size of `buffer`. */
 
     /*
      * Show usage message if less than 2 args are passed or if the tree
      * SHA1 hash is not in the object store.
      */
-	if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
-		usage("commit-tree <sha1> [-p <sha1>]* < changelog");
+    if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
+        usage("commit-tree <sha1> [-p <sha1>]* < changelog");
 
     /*
      * Loop thru all passed-in parent commit SHA1 hashes and show usage
      * message if any of them don't exist in the object store.
      */
-	for (i = 2; i < argc; i += 2) {
-		char *a, *b;
-		a = argv[i]; b = argv[i+1];
-		if (!b || strcmp(a, "-p") || get_sha1_hex(b, parent_sha1[parents]))
-			usage("commit-tree <sha1> [-p <sha1>]* < changelog");
-		parents++;
-	}
+    for (i = 2; i < argc; i += 2) {
+        char *a, *b;
+        a = argv[i]; b = argv[i+1];
+        if (!b || strcmp(a, "-p") || get_sha1_hex(b, parent_sha1[parents]))
+            usage("commit-tree <sha1> [-p <sha1>]* < changelog");
+        parents++;
+    }
 
     /* If no parent commit SHA1 hashes are passed in, assume this is the first commit. */
-	if (!parents)
-		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
+    if (!parents)
+        fprintf(stderr, "Committing initial tree %s\n", argv[1]);
 
         #ifndef BGIT_WINDOWS
     /* Get a `passwd` struct object for the current user running this process. */
-	pw = getpwuid(getuid());
+    pw = getpwuid(getuid());
 
     /* Print an error message if the user isn't read properly. */
-	if (!pw)
-		usage("You don't exist. Go away!");
+    if (!pw)
+        usage("You don't exist. Go away!");
 
     /* Get the user's full name. */
-	realgecos = pw->pw_gecos;
+    realgecos = pw->pw_gecos;
 
     /* Get the length of the user's login id. */
         username = pw->pw_name;
@@ -382,67 +381,67 @@ int main(int argc, char **argv)
 
         #endif
 
-	len = strlen(username);
+    len = strlen(username);
 
     /* Contruct an email address for the user. */
-	memcpy(realemail, username, len);
-	realemail[len] = '@';
+    memcpy(realemail, username, len);
+    realemail[len] = '@';
 
     /* Get the hostname. */
         hostname_size = sizeof(realemail) - len - 1;
         #ifndef BGIT_WINDOWS
-	gethostname(realemail+len+1, hostname_size);
+    gethostname(realemail+len+1, hostname_size);
         #else
         GetComputerName( realemail+len+1, &hostname_size );
         #endif
 
     /* Get the current date and time. */
-	time(&now);
-	realdate = ctime(&now);
+    time(&now);
+    realdate = ctime(&now);
 
     /*
      * Set user name, email, & date from either environment
      * variables or the previously calculated values.
      */
-	gecos = getenv("COMMITTER_NAME") ? : realgecos;
-	email = getenv("COMMITTER_EMAIL") ? : realemail;
-	date = getenv("COMMITTER_DATE") ? : realdate;
+    gecos = getenv("COMMITTER_NAME") ? : realgecos;
+    email = getenv("COMMITTER_EMAIL") ? : realemail;
+    date = getenv("COMMITTER_DATE") ? : realdate;
 
     /* Remove special characters from user property variables. */
-	remove_special(gecos); remove_special(realgecos);
-	remove_special(email); remove_special(realemail);
-	remove_special(date); remove_special(realdate);
+    remove_special(gecos); remove_special(realgecos);
+    remove_special(email); remove_special(realemail);
+    remove_special(date); remove_special(realdate);
 
     /* Initialize the buffer to hold the new commit info. */
-	init_buffer(&buffer, &size);
+    init_buffer(&buffer, &size);
 
     /* Add the static text 'tree' and the tree SHA1 hash to the buffer. */
-	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
+    add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
 
-	/*
+    /*
      * For each passed-in parent commit SHA1 hash, add the static text
      * 'parent' and the parent commit SHA1 hash to the buffer.
      *
-	 * Linus Torvalds: NOTE! This ordering means that the same exact tree merged with a
-	 * different order of parents will be a _different_ changeset even
-	 * if everything else stays the same.
-	 */
-	for (i = 0; i < parents; i++)
-		add_buffer(&buffer, &size, "parent %s\n", sha1_to_hex(parent_sha1[i]));
+     * Linus Torvalds: NOTE! This ordering means that the same exact tree merged with a
+     * different order of parents will be a _different_ changeset even
+     * if everything else stays the same.
+     */
+    for (i = 0; i < parents; i++)
+        add_buffer(&buffer, &size, "parent %s\n", sha1_to_hex(parent_sha1[i]));
 
-	/* Add the commit auther, email, and date info to the buffer. */
-	add_buffer(&buffer, &size, "author %s <%s> %s\n", gecos, email, date);
-	add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", realgecos, realemail, realdate);
+    /* Add the commit auther, email, and date info to the buffer. */
+    add_buffer(&buffer, &size, "author %s <%s> %s\n", gecos, email, date);
+    add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", realgecos, realemail, realdate);
 
-	/* Add the commit message to the buffer. This is what requires the user to type CTRL-D to finish the `commit-tree` command. */
-	while (fgets(comment, sizeof(comment), stdin) != NULL)
-		add_buffer(&buffer, &size, "%s", comment);
+    /* Add the commit message to the buffer. This is what requires the user to type CTRL-D to finish the `commit-tree` command. */
+    while (fgets(comment, sizeof(comment), stdin) != NULL)
+        add_buffer(&buffer, &size, "%s", comment);
 
     /* Finalize the buffer content to get ready to write the new commit file to the object store. */
-	finish_buffer("commit ", &buffer, &size);
+    finish_buffer("commit ", &buffer, &size);
 
     /* Write the new commit object to the object store. */
-	write_sha1_file(buffer, size);
+    write_sha1_file(buffer, size);
 
-	return 0; /* Return success. */
+    return 0; /* Return success. */
 }
