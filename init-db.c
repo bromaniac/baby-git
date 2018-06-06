@@ -41,27 +41,26 @@
 #endif
 
 /* The above 'include' allows use of the following functions and
-   variables from <cache.h> header file, ranked in order of first use
+   variables from "cache.h" header file, ranked in order of first use
    in this file. Most are functions/macros from standard C libraries
-   that are `#included` in <cache.h>. Function names are followed by
+   that are `#included` in "cache.h". Function names are followed by
    parenthesis whereas variable/struct names are not:
 
-   -getenv(name): Get value of the environment variable `name`.
+   -getenv(name): Get value of the environment variable `name`. Sourced from
+                  <stdlib.h>.
+
+   -DB_ENVIRONMENT: Constant string (defined via macro in "cache.h") used to 
+                    specify an environment variable to set the path/name of 
+                    the object store.
+
+   -mkdir(name, mode): Create a new directory `name` with permissions derived 
+                       from `mode`. Sourced from <sys/stat.h>.
+
+   -perror(message): Write `message` to standard error stream. Sourced from 
+                     <stdio.h>.
+
+   -exit(status): Stop execution of the program and exit with code `status`. 
                   Sourced from <stdlib.h>.
-
-   -DB_ENVIRONMENT: Constant string (defined via macro in <cache.h>)
-                    used to specify an environment variable to set
-                    the path/name of the object store.
-
-   -mkdir(name, mode): Create a new directory `name` with
-                       permissions derived from `mode`. Sourced
-                       from <sys/stat.h>.
-
-   -perror(message): Write `message` to standard error stream.
-                     Sourced from <stdio.h>.
-
-   -exit(status): Stop execution of the program and exit with code
-                  `status`. Sourced from <stdlib.h>.
 
    -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
@@ -69,69 +68,64 @@
    -stat(name, buf): Obtain information about file `name` and store it in the 
                      area pointed to by `buf`.
                       
-   -S_ISDIR(mode): Determines whether a file is a directory based
-                   on its `mode`. Sourced from <sys/stat.h>.
+   -S_ISDIR(mode): Determines whether a file is a directory based on its 
+                   `mode`. Sourced from <sys/stat.h>.
 
-   -fprintf(stream, message): Write `message` to the named output
-                              `stream`. Sourced from <stdio.h>.
+   -fprintf(stream, message, ...): Write `message` to the output `stream`. 
+                                   Sourced from <stdio.h>.
 
    -stderr: The stadard error stream. Sourced from <stdio.h>.
 
-   -DEFAULT_DB_ENVIRONMENT: Constant string (defined via macro in
-                            <cache.h>) with the default name of the 
-                            object store.
+   -DEFAULT_DB_ENVIRONMENT: Constant string (defined via macro in "cache.h") 
+                            with the default path of the object store.
 
    -strlen(string): Return the length of `string` in bytes.
 
    -errno: Error number of last error. Sourced from <errno.h>.
 
-   -EEXIST: Error macro indicating that an existing file was
-            specified in a context where it only makes sense
-            to specify a new file. Sourced from <errno.h>.
+   -EEXIST: Error macro indicating that an existing file was specified in a 
+            context where it only makes sense to specify a new file. Sourced 
+            from <errno.h>.
 
-   -malloc(size): Allocate unused space for an object whose
-                  size in bytes is specified by `size` and whose
-                  value is unspecified. Sourced from <stdlib.h>.
+   -malloc(size): Allocate unused space for an object whose size in bytes is 
+                  specified by `size` and whose value is unspecified. Sourced 
+                  from <stdlib.h>.
 
-   -memcpy(s1, s2, n): Copy n bytes from the object pointed to
-                       by s2 into the object pointed to by s1.
-                       Sourced from <string.h>.
+   -memcpy(s1, s2, n): Copy n bytes from the object pointed to by s2 into the 
+                       object pointed to by s1. Sourced from <string.h>.
 
-   -sprintf(s, message): Writes `message` string constant to string variable 
-                         `s` followed by the null character '\0'. Sourced from 
-                         <stdio.h>.
+   -sprintf(s, message, ...): Writes `message` string constant to string 
+                              variable `s` followed by the null character 
+                              '\0'. Sourced from <stdio.h>.
 
    ****************************************************************
 
-   The following variables and functions are defined locally in
-   this file:
+   The following variables and functions are defined in this source file:
 
-   -main(argc, argv): The main function which runs each time the
-                      ./init-db command is run.
+   -main(argc, argv): The main function which runs each time the ./init-db 
+                      command is run.
 
-   -argc: The number of command line arguments supplied when
-          executing ./init-db.
+   -argc: The number of command line arguments supplied when executing 
+          ./init-db.
 
    -argv: Array containing command line argument strings.
 
-   -sha1_dir: The name of the path to the object store.
+   -sha1_dir: The path to the object store.
 
-   -path: A dynamic character string that is used to build the
-          path to each subdirectory in the object store, i.e.
-          one subdirectory for each number between 0 and 255
-          in hexadecimal. The name of each subdirectory will
-          represent the first two numbers of the SHA1 hashes
-          of the objects to be stored in that subdirectory.
+   -path: A dynamic character string that is used to build the path to each 
+          subdirectory in the object store, i.e.  one subdirectory for each 
+          number between 0 and 255 in hexadecimal. The name of each 
+          subdirectory will represent the first two numbers of the SHA1 
+          hashes of the objects to be stored in that subdirectory.
 
    -len: The length of the constant string in the `sha1_dir` variable.
 
-   -i: For loop counter used to create subdirectories in object
-       store.
+   -i: For loop counter used to create subdirectories in object store.
 
    -fd: Declared but not used. Linus Torvalds is mortal too :D.
 
-   -st: Used to store `stat` structure containing file info
-        returned from `stat()` function call.
+   -st: `stat` structure used to store file information obtained from `stat()` 
+        function call.
 */
 
 /*
@@ -170,7 +164,7 @@ int main(int argc, char **argv)
      * Set the `sha1_dir` (i.e. the path to the object store)
      * to the value of the `DB_ENVIRONMENT` environment
      * variable which defaults to `SHA1_FILE_DIRECTORY` as 
-     * defined in <cache.h>. If the environment variable is
+     * defined in "cache.h". If the environment variable is
      * not set (and it most likely won't be), `sha1_dir`
      * will be null (technically a null pointer, but whatever).
      */
@@ -189,7 +183,7 @@ int main(int argc, char **argv)
 
     /*
      * Set `sha1_dir` to the default value `.dircache/objects`
-     * as defined in <cache.h>. Then print a message to the
+     * as defined in "cache.h". Then print a message to the
      * screen conveying this.
      */
     sha1_dir = DEFAULT_DB_ENVIRONMENT;

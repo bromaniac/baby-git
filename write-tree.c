@@ -35,55 +35,57 @@
 
 #include "cache.h"
 /* The above 'include' allows use of the following functions and
-   variables from <cache.h> header file, ranked in order of first use
+   variables from "cache.h" header file, ranked in order of first use
    in this file. Most are functions/macros from standard C libraries
-   that are `#included` in <cache.h>. Function names are followed by
+   that are `#included` in "cache.h". Function names are followed by
    parenthesis whereas variable/struct names are not:
 
-   -sha1_file_name(sha1): Construct and return the path of the object in the
-                          object data base that corresponds to the SHA1 hash
-                          provided by the user.
+   -sha1_file_name(): Build the path of an object in the object database
+                      using the object's SHA1 hash value.
 
-   -access(path, amode): Check whether the file at `path` is accessible
-                         via the permission set descibed by `amode`.
+   -access(path, amode): Check whether the file at `path` can be accessed
+                         according to the permissions specified in `amode`.
 
-   -perror(message): Write `message` to standard error output.
-                     Sourced from <stdio.h>.
+   -perror(message): Write `message` to standard error output stream. Sourced
+                     from <stdio.h>.
 
-   -read_cache(): Read in the contents of the `.dircache/index` file into the
-                  `active_cache`. The number of caches entries is returned.
+   -read_cache(): Read the contents of the `.dircache/index` file into the
+                  `active_cache` array. The number of caches entries is 
+                  returned.
 
-   -fprintf(stream, message): Place `message` on the named output
-                              `stream`. Sourced from <stdio.h>.
+   -fprintf(stream, message, ...): Write `message` to the output `stream`. 
+                                   Sourced from <stdio.h>.
 
    -exit(status): Stop execution of the program and exit with code `status`.
                   Sourced from <stdlib.h>.
 
-   -malloc(size): Allocate unused space for an object whose
-                  size in bytes is specified by `size` and whose
-                  value is unspecified. Sourced from <stdlib.h>.
+   -malloc(size): Allocate unused space for an object whose size in bytes is 
+                  specified by `size` and whose value is unspecified. Sourced 
+                  from <stdlib.h>.
 
-   -alloc_nr(x): This is a macro sourced from <cache.h>.
+   -alloc_nr(x): This is a macro in "cache.h" that's used to calculate the
+                 maximum number of elements to allocate to the active_cache 
+                 array.
 
-   -realloc(pointer, size): Update the size of the memory object pointed to
-                            by `pointer` to `size`. Sourced from <stdlib.h>.
+   -realloc(pointer, size): Update the size of the memory object pointed to by
+                            `pointer` to `size`. Sourced from <stdlib.h>.
 
-   -sprintf(s, message): Place output followed by the null byte, '\0', in
-                         consecutive bytes starting at s. Sourced from
-                         <stdio.h>.
+   -sprintf(s, message, ...): Writes `message` string constant to string 
+                              variable `s` followed by the null character 
+                              '\0'. Sourced from <stdio.h>.
 
-   -memcpy(s1, s2, n): Copy n bytes from the object pointed to
-                       by s2 into the object pointed to by s1.
+   -memcpy(s1, s2, n): Copy n bytes from the object pointed to by s2 into the 
+                       object pointed to by s1.
 
-   -write_sha1_file(buf, len): Compress content stored in `buf`, hash
-                               compressed output, and write to object store.
+   -write_sha1_file(): Deflate an object, calculate the hash value, then call
+                       the write_sha1_buffer function to write the deflated
+                       object to the object database.
 
    ****************************************************************
 
-   The following variables and functions are defined locally.
+   The following variables and functions are defined in this source file.
 
-   -main(): The main function runs each time the ./write-tree
-            command is run.
+   -main(): The main function runs each time the ./write-tree command is run.
 
    -check_valid_sha1(): Check if user-supplied SHA1 hash corresponds to an
                         object in the object database.
@@ -99,17 +101,20 @@
 /*
  * Function: `check_valid_sha1`
  * Parameters:
- *      -sha1: The hash to check if there is an valid file for.
- * Purpose: To check whether or not there is a file in the working directory
- *          corresponding to the passed-in hash.
+ *      -sha1: An SHA1 hash to check.
+ * Purpose: Check if user-supplied SHA1 hash corresponds to an object in the 
+ *          object database.
  */
 static int check_valid_sha1(unsigned char *sha1)
 {
-    /* Get the path corresponding to a specific hash. */
+    /*
+     * Build the path of an object in the object database using the object's 
+     * SHA1 hash value.
+     */
     char *filename = sha1_file_name(sha1);
     int ret;   /* Return code. */
 
-    /* Check whether the file is accessible in the working directory. */
+    /* Check whether the object is accessible in the object database. */
     ret = access(filename, R_OK);
 
     /* Error if the file is not accessible. */
@@ -122,22 +127,30 @@ static int check_valid_sha1(unsigned char *sha1)
 /*
  * Function: `prepend_integer`
  * Parameters:
- *      -buffer: A string to prepend an integer to.
+ *      -buffer: Buffer that holds the tree data.
  *      -val: Size in bytes of the tree data.
- *      -i: Number of bytes at the beginning of the `buffer` that are 
- *          allocated to the object tag and object data size.
+ *      -i: Number of bytes at the beginning of `buffer` that are allocated 
+ *          for the object tag and object data size.
+ * Purpose: Prepend the size of the tree data in bytes to the buffer.
  */
 static int prepend_integer(char *buffer, unsigned val, int i)
 {
-    /* Decrement `i` and set the new ith element in `buffer` to the null 
-     * byte. 
-     */
+    /* Prepend a null character to the tree data in the buffer. */
     buffer[--i] = '\0';
 
+    /*
+     * Prepend the decimal form of the size of the tree data in bytes before
+     * the null character.
+     */
     do {
         buffer[--i] = '0' + (val % 10);
         val /= 10;
     } while (val);
+    /*
+     * The value of `i` is the index of the first buffer element that contains
+     * a value. This corresponds to the most significant digit of the decimal 
+     * form of the tree data size.
+     */
     return i;
 }
 
@@ -156,7 +169,7 @@ static int prepend_integer(char *buffer, unsigned val, int i)
  */
 int main(int argc, char **argv)
 {
-    /* The size allocated to the buffer. */
+    /* The size to be allocated to the buffer. */
     unsigned long size;
 
     /* The size of the filled portion of the buffer. */
@@ -170,7 +183,8 @@ int main(int argc, char **argv)
 
     /*
      * Read in the contents of the `.dircache/index` file into the 
-     * `active_cache`. The number of cache entries is stored in `entries`.
+     * `active_cache` array. The number of cache entries is returned and 
+     * stored in `entries`.
      */
     int entries = read_cache();
 
@@ -179,7 +193,7 @@ int main(int argc, char **argv)
 
     /*
      * If there are no active cache entries, throw an error message since 
-     * there is nothing staged in the index to write.
+     * there is nothing staged in the index to write to a tree.
      */
     if (entries <= 0) {
         fprintf(stderr, "No file-cache to create a tree of\n");
@@ -196,14 +210,14 @@ int main(int argc, char **argv)
     offset = ORIG_OFFSET;
 
     /*
-     * Iterate over each cache entry, adding the relevant info to the buffer
-     * representing the tree.
+     * Iterate over each cache entry and build the tree object by adding the 
+     * relevant information to the buffer.
      */
     for (i = 0; i < entries; i++) {
-        /* Pick out the ith cache entry from the active cache. */
+        /* Pick out the ith cache entry from the active_cache array. */
         struct cache_entry *ce = active_cache[i];
 
-        /* Make sure each cache entry has a valid SHA1, or exit. */
+        /* Make sure each cache entry has a valid SHA1. Otherwise, exit. */
         if (check_valid_sha1(ce->sha1) < 0)
             exit(1);
 
@@ -214,20 +228,23 @@ int main(int argc, char **argv)
         }
 
         /*
-         * Add the file mode and name to the tree for the current cache 
-         * entry. 
+         * Write the cache entry's file mode and name to the buffer and
+         * increment `offset` by the number of characters that were written.
          */
         offset += sprintf(buffer + offset, "%o %s", ce->st_mode, ce->name);
 
-        /* Add a `0` to the tree buffer as a null byte separator. */
+        /*
+         * Write a null character to the buffer as a separator and increment
+         * `offset`. 
+         */
         buffer[offset++] = 0;
 
-        /* Add the cache entry's SHA1 to the tree buffer. */
+        /* Add the cache entry's SHA1 hash to the buffer. */
         memcpy(buffer + offset, ce->sha1, 20);
 
         /*
-         * Increment the offset by 20 bytes based on the size of the 
-         * previously added SHA1. 
+         * Increment the offset by 20 bytes, the length of an SHA1 hash in
+         * decimal representation.
          */
         offset += 20;
     }
@@ -243,13 +260,16 @@ int main(int argc, char **argv)
     i -= 5;
     memcpy(buffer+i, "tree ", 5);
 
-    /* Adjust buffer to start at the beginning of `tree` object tag */
+    /*
+     * Adjust buffer to start at the first character of the `tree` object 
+     * tag. 
+     */
     buffer += i;
-    /* Calculate final total size of this buffer */
+    /* Calculate final total size of this buffer. */
     offset -= i;
 
-    /* Compress `buffer` content, calculate hash of compressed output, and 
-     * write to object store. 
+    /* Compress the contents of buffer, calculate SHA1 hash of compressed 
+     * output, and write the tree object to the object store. 
      */
     write_sha1_file(buffer, offset);
 

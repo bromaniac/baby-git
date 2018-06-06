@@ -37,17 +37,16 @@
 
 #include "cache.h"
 /* The above 'include' allows use of the following functions and
-   variables from <cache.h> header file, ranked in order of first use
+   variables from "cache.h" header file, ranked in order of first use
    in this file. Most are functions/macros from standard C libraries
-   that are `#included` in <cache.h>. Function names are followed by
+   that are `#included` in "cache.h". Function names are followed by
    parenthesis whereas variable/struct names are not:
 
-   -memcmp(str1, str2, n): Compare first n bytes of str1 to str2
-                           and return an integer greater than, equal
-                           to, or less than 0, if the object pointed
-                           to by str1 is greater than, equal to, or less
-                           than the object pointed to by str2, respectively.
-                           Sourced from <string.h>.
+   -memcmp(str1, str2, n): Compare first n bytes of str1 to str2 and return an 
+                           integer greater than, equal to, or less than 0, if 
+                           the object pointed to by str1 is greater than, 
+                           equal to, or less than the object pointed to by 
+                           str2, respectively. Sourced from <string.h>.
 
    -active_nr: The number of entries in the active cache/index.
 
@@ -62,12 +61,12 @@
    -sizeof(datatype): Operator that gives the number of bytes needed to store 
                       a datatype or variable. 
 
-   -z_stream: General-purpose compression/decompression stream. Sourced
-              from <zlib.h>.
+   -z_stream: General-purpose compression/decompression stream. Sourced from
+              <zlib.h>.
 
-   -malloc(size): Allocate unused space for an object whose
-                  size in bytes is specified by `size` and whose
-                  value is unspecified. Sourced from <stdlib.h>.
+   -malloc(size): Allocate unused space for an object whose size in bytes is 
+                  specified by `size` and whose value is unspecified. Sourced 
+                  from <stdlib.h>.
 
    -mmap(addr, len, prot, flags,
          file_descriptor, offset): Establish a mapping between a process'
@@ -108,9 +107,9 @@
                         size as opposed to compression speed. Sourced from
                         <zlib.h>.
 
-   -sprintf(s, message): Writes `message` string constant to string variable 
-                         `s` followed by the null character '\0'. Sourced from 
-                         <stdio.h>.
+   -sprintf(s, message, ...): Writes `message` string constant to string 
+                              variable `s` followed by the null character 
+                              '\0'. Sourced from <stdio.h>.
 
    -deflate(z_stream, flush): Compresses as much data as possible and stops
                               when the input buffer becomes empty or the
@@ -170,8 +169,8 @@
 
    -strlen(string): Return the length of `string` in bytes.
 
-   -memcpy(s1, s2, n): Copy n bytes from the object pointed to
-                       by s2 into the object pointed to by s1.
+   -memcpy(s1, s2, n): Copy n bytes from the object pointed to by s2 into the 
+                       object pointed to by s1.
 
    -cache_header: Structure representing header information for the cache.
                   Sourced from "cache.h".
@@ -184,8 +183,8 @@
                             object of specified type to its specified member, 
                             including padding if any. Sourced from <stddef.h>.
 
-   -perror(message): Write `message` to standard error stream.
-                     Sourced from <stdio.h>.
+   -perror(message): Write `message` to standard error stream. Sourced from 
+                     <stdio.h>.
 
    -O_RDWR: Flag for the open() function indicating to open the file for
             reading and writing. Sourced from <fcntl.h>.
@@ -194,26 +193,25 @@
              no effect except as noted under O_EXCL below. Otherwise, the file 
              shall be created. Sourced from <fcntl.h>.
 
-   -O_EXCL: Flag for the open() function. If O_CREAT and O_EXCL are set, 
+   -O_EXCL: Flag for the open() function. If O_CREAT and O_EXCL are set,
             open() shall fail if the file exists.
 
-   -fprintf(stream, message): Write `message` to the named output
-                              `stream`. Sourced from <stdio.h>.
+   -fprintf(stream, message, ...): Write `message` to the output `stream`. 
+                                   Sourced from <stdio.h>.
 
-   -rename(old, new): Change the name of a file. `old` points to
-                      the pathname of the file to be renamed. `new`
-                      points to the new pathname of the file. Sourced
-                      from <stdio.h>.
+   -rename(old, new): Change the name of a file. `old` points to the pathname 
+                      of the file to be renamed. `new` points to the new 
+                      pathname of the file. Sourced from <stdio.h>.
 
    ****************************************************************
 
-   The following variables and functions are defined locally.
+   The following variables and functions are defined in this source file.
 
-   -main(argc, argv): The main function which runs each time the
-                      ./cat-file command is run.
+   -main(argc, argv): The main function which runs each time the ./cat-file 
+                      command is run.
 
-   -argc: The number of command line arguments supplied when
-          executing ./cat-file.
+   -argc: The number of command line arguments supplied when executing 
+          ./cat-file.
 
    -argv: Array containing command line argument strings.
 
@@ -222,7 +220,7 @@
    -add_file_to_cache(): Gets information about the file to cache, stores the 
                          file metadata in a cache_entry structure, then calls 
                          the `index_fd()` function to write the blob object to 
-                         the object store, and the `add_cache_entry()` 
+                         the object store, and the `add_cache_entry()`
                          function to insert the cache entry into the 
                          `active_cache` array lexicographically.
 
@@ -504,7 +502,7 @@ static int add_file_to_cache(char *path)
     int size, namelen;
     /* Used to reference a cache entry. */
     struct cache_entry *ce; 
-    /* Used to store file info from `fstat()` command. */
+    /* Used to store file information from `fstat()` function call. */
     struct stat st;
     /* Reference to a file descriptor representing a link to a file. */
     int fd;

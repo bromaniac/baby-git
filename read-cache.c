@@ -28,17 +28,16 @@
  */
 #include "cache.h"
 /* The above 'include' allows use of the following functions and
-   variables from <cache.h> header file, ranked in order of first use
+   variables from "cache.h" header file, ranked in order of first use
    in this file. Most are functions/macros from standard C libraries
-   that are `#included` in <cache.h>. Function names are followed by
+   that are `#included` in "cache.h". Function names are followed by
    parenthesis whereas variable/struct names are not:
 
-   -memcmp(str1, str2, n): Compare first n bytes of str1 to str2
-                           and return an integer greater than, equal
-                           to, or less than 0, if the object pointed
-                           to by str1 is greater than, equal to, or less
-                           than the object pointed to by str2, respectively.
-                           Sourced from <string.h>.
+   -memcmp(str1, str2, n): Compare first n bytes of str1 to str2 and return an 
+                           integer greater than, equal to, or less than 0, if 
+                           the object pointed to by str1 is greater than, 
+                           equal to, or less than the object pointed to by 
+                           str2, respectively. Sourced from <string.h>.
 
    -active_nr: The number of entries in the active cache/index.
 
@@ -49,12 +48,12 @@
    -sizeof(datatype): Operator that gives the number of bytes needed to store 
                       a datatype or variable. 
 
-   -z_stream: General-purpose compression/decompression stream. Sourced
-              from <zlib.h>.
+   -z_stream: General-purpose compression/decompression stream. Sourced from
+              <zlib.h>.
 
-   -malloc(size): Allocate unused space for an object whose
-                  size in bytes is specified by `size` and whose
-                  value is unspecified. Sourced from <stdlib.h>.
+   -malloc(size): Allocate unused space for an object whose size in bytes is 
+                  specified by `size` and whose value is unspecified. Sourced 
+                  from <stdlib.h>.
 
    -mmap(addr, len, prot, flags,
          file_descriptor, offset): Establish a mapping between a process'
@@ -94,8 +93,8 @@
                                        compressed size after deflation of 
                                        `sourceLen` bytes.
 
-   -inflateInit(z_stream): Initializes the internal `z_stream` state
-                           for decompression. Sourced from <zlib.h>.
+   -inflateInit(z_stream): Initializes the internal `z_stream` state for
+                           decompression. Sourced from <zlib.h>.
 
    -Z_BEST_COMPRESSION: Translates to compression level 9, which, as an input 
                         to `deflateInit()`, indicates optimizing compression
@@ -165,8 +164,8 @@
 
    -strlen(string): Return the length of `string` in bytes.
 
-   -memcpy(s1, s2, n): Copy n bytes from the object pointed to
-                       by s2 into the object pointed to by s1.
+   -memcpy(s1, s2, n): Copy n bytes from the object pointed to by s2 into the 
+                       object pointed to by s1.
 
    -cache_header: Structure representing header information for the cache.
                   Sourced from "cache.h".
@@ -179,8 +178,8 @@
                             object of specified type to its specified member, 
                             including padding if any. Sourced from <stddef.h>.
 
-   -perror(message): Write `message` to standard error stream.
-                     Sourced from <stdio.h>.
+   -perror(message): Write `message` to standard error stream. Sourced from 
+                     <stdio.h>.
 
    -O_CREAT: Flag for the open() function. If the file exists, this flag has 
              no effect except as noted under O_EXCL below. Otherwise, the file 
@@ -189,14 +188,14 @@
    -O_EXCL: Flag for the open() function. If O_CREAT and O_EXCL are set, 
             open() shall fail if the file exists.
 
-   -fprintf(stream, message): Write `message` to the named output
-                              `stream`. Sourced from <stdio.h>.
+   -fprintf(stream, message, ...): Write `message` to the output `stream`.
+                                   Sourced from <stdio.h>.
     
    -sscanf(s, format, ...): Read formatted data from string `s`.
 
    ****************************************************************
 
-   The following variables are external variables defined in this file:
+   The following variables are external variables defined in this source file:
 
    -sha1_file_directory: The path to the object store.
 
@@ -211,7 +210,7 @@
 
    ****************************************************************
 
-   The following variables and functions are defined locally.
+   The following variables and functions are defined in this source file:
 
    -usage(): Print an error message.
 
