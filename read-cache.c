@@ -191,7 +191,9 @@
    -fprintf(stream, message, ...): Write `message` to the output `stream`.
                                    Sourced from <stdio.h>.
     
-   -sscanf(s, format, ...): Read formatted data from string `s`.
+   -sscanf(string, format, args): Read input from `string` into `args` using 
+                                  input format `format`. Sourced from 
+                                  <stdio.h>.
 
    ****************************************************************
 
@@ -432,7 +434,7 @@ char *sha1_file_name(unsigned char *sha1)
  * Function: `read_sha1_file`
  * Parameters:
  *      -sha1: SHA1 hash value of an object.
- *      -type: The type of the object to be read in (blob, tree, or commit).
+ *      -type: The type of object that was read (blob, tree, or commit).
  *      -size: The size in bytes of the object data.
  * Purpose: Locate an object in the object database, read and inflate it, then 
  *          return the inflated object data (without the prepended metadata).
