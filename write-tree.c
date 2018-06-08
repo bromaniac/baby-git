@@ -127,7 +127,7 @@ static int check_valid_sha1(unsigned char *sha1)
 /*
  * Function: `prepend_integer`
  * Parameters:
- *      -buffer: Buffer that holds the tree data.
+ *      -buffer: Pointer to buffer that holds the tree data.
  *      -val: Size in bytes of the tree data.
  *      -i: Number of bytes at the beginning of `buffer` that are allocated 
  *          for the object tag and object data size.
@@ -147,9 +147,8 @@ static int prepend_integer(char *buffer, unsigned val, int i)
         val /= 10;
     } while (val);
     /*
-     * The value of `i` is the index of the first buffer element that contains
-     * a value. This corresponds to the most significant digit of the decimal 
-     * form of the tree data size.
+     * The value of `i` is now the index of the buffer element that contains 
+     * the most significant digit of the decimal form of the tree data size.
      */
     return i;
 }
@@ -171,16 +170,12 @@ int main(int argc, char **argv)
 {
     /* The size to be allocated to the buffer. */
     unsigned long size;
-
-    /* The size of the filled portion of the buffer. */
+    /* Index of the element of the buffer to be filled next. */
     unsigned long offset;
-
     /* Not used. Even Linus Torvalds makes mistakes. */
     unsigned long val;
-
     /* Iterator used in for loop. */
     int i;
-
     /*
      * Read in the contents of the `.dircache/index` file into the 
      * `active_cache` array. The number of cache entries is returned and 
@@ -202,11 +197,12 @@ int main(int argc, char **argv)
 
     /* Linus Torvalds: Guess at an initial size */
     size = entries * 40 + 400;
-
-    /* Allocate `size` bytes to store the tree's content. */
+    /* Allocate `size` bytes to buffer to store the tree content. */
     buffer = malloc(size);
-
-    /* Set the offset using the macro defined in this file. */
+    /*
+     * Set the offset index using the macro defined in this file. The tree
+     * data will be written starting at this offset. 
+     */
     offset = ORIG_OFFSET;
 
     /*

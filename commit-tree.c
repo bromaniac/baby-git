@@ -187,7 +187,7 @@
 /*
  * Function: `init_buffer`
  * Parameters:
- *      -bufp: Pointer to a pointer to a buffer to allocate and initialize.
+ *      -bufp: Pointer to a pointer to the buffer to allocate and initialize.
  *      -sizep: Pointer to the size of filled portion of the buffer.
  * Purpose: Allocate space to and initialize the buffer that will contain the 
  *          commit data.
@@ -207,7 +207,7 @@ static void init_buffer(char **bufp, unsigned int *sizep)
 /*
  * Function: `add_buffer`
  * Parameters:
- *      -bufp: Pointer to a pointer to the commit object buffer.
+ *      -bufp: Pointer to a pointer to The commit object buffer.
  *      -sizep: Pointer to the size of the filled portion of the buffer.
  *      -fmt: Format string.
  * Purpose: Adds one item of the commit data to the buffer.
@@ -218,7 +218,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
     va_list args;                       /* A variable argument list. */
     int len;                            /* Length of string in one_line. */
     unsigned long alloc, size, newsize; /* Variables to track buffer size. */
-    char *buf;                          /* Pointer to commit object buffer. */
+    char *buf;                          /* Local buffer. */
 
     /* Initialize args to point to the first unnamed argument after fmt. */
     va_start(args, fmt); 
@@ -252,10 +252,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
         alloc = (newsize + 32767) & ~32767; 
         /* Increase the buffer size. */
         buf = realloc(buf, alloc); 
-        /*
-         * Set the commit object buffer pointer to point to the reallocated
-         * buffer. 
-         */
+        /* Set the commit object buffer to the reallocated buffer. */
         *bufp = buf; 
     }
     /* New size of filled portion of commit object buffer. */
@@ -270,48 +267,80 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 /*
  * Function: `prepend_integer`
  * Parameters:
- *      -buffer: The buffer to be committed to the object store.
- *      -val: The value to use to populate the buffer offset.
- *      -i: The size of the buffer offset to populate.
- * Purpose: Populate the buffer offset.
+ *      -buffer: Pointer to buffer that holds the commit data.
+ *      -val: Size in bytes of the commit data.
+ *      -i: Number of bytes at the beginning of `buffer` that are allocated 
+ *          for the object tag and object data size.
+ * Purpose: Prepend the size of the commit data in bytes to the buffer.
  */
 static int prepend_integer(char *buffer, unsigned val, int i)
 {
-    buffer[--i] = '\0'; /* Set the ith entry in buffer to the null byte and decrement i. */
+    /* Prepend a null character to the commit data in the buffer. */
+    buffer[--i] = '\0'; 
 
-    /* Populate the buffer offset. */
+    /*
+     * Prepend the decimal form of the size of the commit data in bytes before
+     * the null character.
+     */
     do {
         buffer[--i] = '0' + (val % 10);
         val /= 10;
     } while (val);
+    /*
+     * The value of `i` is now the index of the buffer element that contains 
+     * the most significant digit of the decimal form of the commit data size.
+     */
     return i;
 }
 
 /*
  * Function: `finish_buffer`
  * Parameters:
- *      -tag: Label to add at the beginning of the buffer.
- *      -bufp: The buffer to be committed.
- *      -sizep: The size of the buffer.
- * Purpose: Final prep for the buffer so that the new commit ready to be added to object store.
+ *      -tag: Object tag to prepend to the buffer.
+ *      -bufp: Pointer to a pointer to the commit object buffer.
+ *      -sizep: Pointer to the size of the filled portion of the buffer.
+ * Purpose: Call the prepend_integer() function to prepend the size of the 
+ *          commit data to the buffer, and then prepend the object tag to the 
+ *          buffer.
  */
 static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
 {
-    int taglen; /* The length of the tag. */
-    int offset; /* The buffer offset. */
-    char *buf = *bufp; /* Set the passed-in buffer. */
-    unsigned int size = *sizep; /* Set the passed-in buffer size. */
+    /* The length of the object tag. */
+    int taglen; 
+    /* Index of the element of the buffer to be filled next. */
+    int offset; 
+    /* Set local pointer to point to the commit object buffer. */
+    char *buf = *bufp; 
+    /* Size of current filled portion of commit object buffer. */
+    unsigned int size = *sizep; 
 
-    /* Populate buffer offset. */
+    /* Prepend the size of the tree data in bytes to the buffer. */
     offset = prepend_integer(buf, size - ORIG_OFFSET, ORIG_OFFSET);
-    taglen = strlen(tag); /* Length of tag. */
-    offset -= taglen; /* Decrement offset by taglen. */
-    buf += offset; /* Add offset to buffer. */
-    size -= offset; /* Decrement size by offset. */
-    memcpy(buf, tag, taglen); /* Copy the tag into the buffer. */
+    /* Get the length of the object tag. */
+    taglen = strlen(tag); 
+    /* Decrement offset by length of the object tag. */
+    offset -= taglen; 
+    /*
+     * Point to the byte in the buffer where the first character of the object 
+     * tag will be written. 
+     */
+    buf += offset; 
+    /*
+     * Calculate final size of filled portion of buffer, i.e., the size of the 
+     * commit object. 
+     */
+    size -= offset; 
+    /* Prepend the commit object tag to the buffer. */
+    memcpy(buf, tag, taglen); 
 
-    *bufp = buf; /* Set the final buffer. */
-    *sizep = size; /* Set the final buffer size. */
+    /*
+     * Adjust buffer to start at the first character of the `commit` object 
+     * tag. 
+     */
+    *bufp = buf; 
+    
+    /* Final size of the commit object. */
+    *sizep = size; 
 }
 
 /*
@@ -322,13 +351,13 @@ static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
  */
 static void remove_special(char *p)
 {
-    char c; /* Used to iterate through string characters. */
-    char *dst = p; /* Pointer to the string. */
+    char c; 
+    char *dst = p;   /* Initialize pointer. */
 
-    /* Run infinitely until break statement. */
+    /* Loop continuously until break statement. */
     for (;;) {
-        c = *p; /* Set `c` to first character in string. */
-        p++; /* Increment pointer to next character. */
+        c = *p;   /* Set `c` to current character pointed to by `p`. */
+        p++;      /* Increment pointer to point to next character. */
 
         /* If character is newline or angle bracket, ignore it. */
         switch(c) {
@@ -336,10 +365,10 @@ static void remove_special(char *p)
                 continue;
         }
 
-        /* Add character to string. */
+        /* Add current character to string. */
         *dst++ = c;
 
-        /* If we've gone off end of string, end. */
+        /* Exit for loop if character is null. */
         if (!c)
             break;
     }
@@ -358,47 +387,63 @@ static void remove_special(char *p)
 /*
  * Function: `main`
  * Parameters:
- *      -argc: The number of command-line arguments supplied, inluding the command itself.
- *      -argv: An array of the command line arguments, including the command itself.
- * Purpose: Standard `main` function definition. Runs when the executable `commit-tree` is
- *          run from the command line.
+ *      -argc: The number of command line arguments supplied, inluding the 
+ *             command itself.
+ *      -argv: An array of the command line arguments, including the command 
+ *             itself.
+ * Purpose: Standard `main` function definition. Runs when the executable 
+ *          `commit-tree` is run from the command line.
  */
 int main(int argc, char **argv)
 {
-    int i; /* For loop counter. */
-    int len; /* Used to store the length of the OS user name. */
-    int parents = 0; /* The number of passed-in parent commits. */
-    unsigned char tree_sha1[20]; /* The SHA1 of the tree to be committed. */
-    unsigned char parent_sha1[MAXPARENT][20]; /* An array of passed-in parent commit SHA1 hashes. */
+    int i;             /* For loop counter. */
+    int len;           /* The length of the user's login name. */
+    int parents = 0;   /* The number of parent commit objects. */
+
+    /* The SHA1 hash of the tree to be committed. */
+    unsigned char tree_sha1[20];
+    /* An array of SHA1 hashes of parent commit objects. */
+    unsigned char parent_sha1[MAXPARENT][20];
+    /* Used to store user information. */
     char *gecos, *realgecos;
-    char *email, realemail[1000]; /* Used to store the user's email address. */
-        size_t hostname_size;
-    char *date, *realdate; /* Used to store the date. */
-    char comment[1000]; /* Used to store the commit message. */
+    /* Used to store the user's email address. */
+    char *email, realemail[1000]; 
+    /* Maximum number of characters allocated to the hostname. */
+    size_t hostname_size;
+    /* Used to store the date. */
+    char *date, *realdate; 
+    /* Used to store the commit message. */
+    char comment[1000]; 
 
-        #ifndef BGIT_WINDOWS
-            /* The `passwd` struct is used for storing user account information. */
-            struct passwd *pw;
-            char *username;
-        #else
-            unsigned long uname_len = UNLEN + 1;
-            char username[uname_len];
-        #endif
-
-    time_t now; /* Used to store the time of the commit. */
-    char *buffer; /* Used to store and build up the content to be added to the new commit before it is written to the object store. */
-    unsigned int size; /* The size of `buffer`. */
+    #ifndef BGIT_WINDOWS
+    /* A `passwd` structure to store user account information. */
+    struct passwd *pw;
+    char *username;
+    #else
+    unsigned long uname_len = UNLEN + 1;
+    char username[uname_len];
+    #endif
 
     /*
-     * Show usage message if less than 2 args are passed or if the tree
-     * SHA1 hash is not in the object store.
+     * Used to store the commit time in number of seconds elapsed since 
+     * elapsed since 00:00:00 on January 1, 1970 UTC.
+     */
+    time_t now; 
+    char *buffer;        /* The commit object buffer. */
+    unsigned int size;   /* Size of filled portion of commit object buffer. */
+
+    /*
+     * Show usage message if there are less than 2 command line arguments or 
+     * if an object corresponding to the given tree SHA1 hash does not exist
+     * in the object store.
      */
     if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
         usage("commit-tree <sha1> [-p <sha1>]* < changelog");
 
     /*
-     * Loop thru all passed-in parent commit SHA1 hashes and show usage
-     * message if any of them don't exist in the object store.
+     * Loop through the parent commit SHA1 hashes in the command line
+     * arguments. Show usage message if the corresponding object does not
+     * exist in the object store. Otherwise, increment the parent counter.
      */
     for (i = 2; i < argc; i += 2) {
         char *a, *b;
@@ -408,92 +453,109 @@ int main(int argc, char **argv)
         parents++;
     }
 
-    /* If no parent commit SHA1 hashes are passed in, assume this is the first commit. */
+    /*
+     * If no parent commit SHA1 hashes were specified, assume this is the 
+     * first commit of the tree object. 
+     */
     if (!parents)
         fprintf(stderr, "Committing initial tree %s\n", argv[1]);
 
-        #ifndef BGIT_WINDOWS
-    /* Get a `passwd` struct object for the current user running this process. */
+    #ifndef BGIT_WINDOWS
+    /*
+     * Get the real user ID of the calling process and store information about
+     * this user in the `pw` passwd structure.
+     */
     pw = getpwuid(getuid());
 
-    /* Print an error message if the user isn't read properly. */
+    /* Print an error message if getpwuid() returns null. */
     if (!pw)
         usage("You don't exist. Go away!");
 
     /* Get the user's full name. */
     realgecos = pw->pw_gecos;
+    /* Get the user's login name. */
+    username = pw->pw_name;
+    #else
+    GetUserName(username, &uname_len);
+    realgecos = username;
+    #endif
 
-    /* Get the length of the user's login id. */
-        username = pw->pw_name;
-
-        #else
-
-        GetUserName( username, &uname_len );
-        realgecos = username;
-
-        #endif
-
+    /* Get the length of the user name. */
     len = strlen(username);
 
     /* Contruct an email address for the user. */
     memcpy(realemail, username, len);
     realemail[len] = '@';
 
-    /* Get the hostname. */
-        hostname_size = sizeof(realemail) - len - 1;
-        #ifndef BGIT_WINDOWS
+    /* Get the hostname and append it to the email string. */
+    hostname_size = sizeof(realemail) - len - 1;
+    #ifndef BGIT_WINDOWS
     gethostname(realemail+len+1, hostname_size);
-        #else
-        GetComputerName( realemail+len+1, &hostname_size );
-        #endif
+    #else
+    GetComputerName(realemail+len+1, &hostname_size);
+    #endif
 
-    /* Get the current date and time. */
+    /*
+     * Get the current calendar time and convert it to a human-readable string
+     * of the corresponding local date and time. 
+     */
     time(&now);
     realdate = ctime(&now);
 
     /*
-     * Set user name, email, & date from either environment
-     * variables or the previously calculated values.
+     * Set author name, email, and commit time using either environment
+     * variables or the values obtained above.
      */
     gecos = getenv("COMMITTER_NAME") ? : realgecos;
     email = getenv("COMMITTER_EMAIL") ? : realemail;
     date = getenv("COMMITTER_DATE") ? : realdate;
 
-    /* Remove special characters from user property variables. */
+    /* Remove special characters from the above strings. */
     remove_special(gecos); remove_special(realgecos);
     remove_special(email); remove_special(realemail);
     remove_special(date); remove_special(realdate);
 
-    /* Initialize the buffer to hold the new commit info. */
+    /* Allocate space to and initialize the commit object buffer. */
     init_buffer(&buffer, &size);
 
-    /* Add the static text 'tree' and the tree SHA1 hash to the buffer. */
+    /* Add the string 'tree ' and the tree SHA1 hash to the buffer. */
     add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
 
     /*
-     * For each passed-in parent commit SHA1 hash, add the static text
-     * 'parent' and the parent commit SHA1 hash to the buffer.
+     * For each pareent commit SHA1 hash, add the static string 'parent' and 
+     * the hash to the buffer.
      *
-     * Linus Torvalds: NOTE! This ordering means that the same exact tree merged with a
-     * different order of parents will be a _different_ changeset even
-     * if everything else stays the same.
+     * Linus Torvalds: NOTE! This ordering means that the same exact tree 
+     * merged with a * different order of parents will be a _different_ 
+     * changeset even if everything else stays the same.
      */
     for (i = 0; i < parents; i++)
-        add_buffer(&buffer, &size, "parent %s\n", sha1_to_hex(parent_sha1[i]));
+        add_buffer(&buffer, &size, "parent %s\n", 
+                   sha1_to_hex(parent_sha1[i]));
 
-    /* Add the commit auther, email, and date info to the buffer. */
+    /* Add the author and committer email, and commit time to the buffer. */
     add_buffer(&buffer, &size, "author %s <%s> %s\n", gecos, email, date);
-    add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", realgecos, realemail, realdate);
-
-    /* Add the commit message to the buffer. This is what requires the user to type CTRL-D to finish the `commit-tree` command. */
+    add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", 
+               realgecos, realemail, realdate);
+    /*
+     * Add the commit message to the buffer. This is what requires the user to 
+     * type CTRL-D to finish the `commit-tree` command. 
+     */
     while (fgets(comment, sizeof(comment), stdin) != NULL)
         add_buffer(&buffer, &size, "%s", comment);
 
-    /* Finalize the buffer content to get ready to write the new commit file to the object store. */
+    /*
+     * Prepend the size of the commit data to the buffer, and then prepend the
+     * commit object tag to the buffer.
+     */
     finish_buffer("commit ", &buffer, &size);
 
-    /* Write the new commit object to the object store. */
+    /*
+     * Deflate the commit object, calculate the hash value, then call the 
+     * write_sha1_buffer function to write the deflated object to the object 
+     * database.
+     */
     write_sha1_file(buffer, size);
 
-    return 0; /* Return success. */
+    return 0;   /* Return success. */
 }
