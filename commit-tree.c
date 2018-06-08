@@ -72,10 +72,10 @@
                                 `last` named argument.
 
    -vsnprintf(char *s, size_t n, const char *format, va_list arg):
-       Construct `format` using the variable argument list `arg` and write the 
-       formatted string into `s`, with `n` specifying the maximum number of
-       characters that can be written to `s`, including the null terminating
-       character.
+        Construct `format` using the variable argument list `arg` and write 
+        the formatted string into `s`, with `n` specifying the maximum number 
+        of characters that can be written to `s`, including the null 
+        terminating character.
 
    -va_end(va_list ap): Marco that performs cleanup for a va_list object that
                         was initialized through a call to va_start().
@@ -105,30 +105,36 @@
    -getpwuid(uid): Returns a pointer to a structure that contains information
                    about the user with user ID `uid`.
 
-   -gethostname(name, namelen): Return the standard host name for the
-                                current machine.
+   -gethostname(name, namelen): Get the host name of the system on which the
+                                function it was called and store it in array 
+                                `name`, which has length `namelen`.
 
-   -time(time_t *tloc): Return the value of time in seconds since the Epoch.
+   -time(time_t *timep): Return the current calendar time in number of seconds
+                         elapsed since 00:00:00 on January 1, 1970 UTC.
 
-   -ctime(const time_t *clock): Convert time value to a date and time string.
+   -ctime(const time_t *timep): Convert time pointed to by `timep` to a
+                                human-readable string of the corresponding
+                                local date and time.
 
-   -getenv(name): Get value of the environment variable `name`.
-                  Sourced from <stdlib.h>.
+   -getenv(name): Get value of the environment variable `name`. Sourced from
+                  <stdlib.h>.
 
-   -sha1_to_hex: TODO
+   -sha1_to_hex(): Convert a 20-byte decimal representation of an SHA1 hash
+                   value to the equivalent 40-character hexadicimal 
+                   representation.
 
-   -fgets(char *restrict s, int n, FILE *restrict stream):
-       Read bytes from `stream` into the array pointed to by `s`, until `n`-1
-       bytes are read, or a <newline> is read and transferred to `s`, or an
-       end-of-file condition is encountered. The string is then terminated with
-       a null byte.
+   -fgets(char *s, int n, FILE *stream):
+        Read bytes from `stream` into the array pointed to by `s`, until `n`-1
+        bytes are read, or a <newline> is read and transferred to `s`, or an
+        end-of-file condition is encountered. The string is then terminated with
+        a null byte.
 
-   -sizeof(datatype): Generates the size of a variable or datatype,
-                      measured in the number of char size storage
-                      units required for the type.
+   -sizeof(datatype): Operator that gives the number of bytes needed to store 
+                      a datatype or variable. 
 
-   -write_sha1_file(buf, len): Compress file content stored in `buf`, hash
-                               compressed output, and write to object store.
+   -write_sha1_file(): Deflate an object, calculate the hash value, then call
+                       the write_sha1_buffer function to write the deflated
+                       object to the object database.
 
    ****************************************************************
 
@@ -137,82 +143,128 @@
    -main(): The main function runs each time the ./commit-tree
             command is run.
 
-   -init_buffer(): Allocate memory and offset size for buffer.
+   -init_buffer(): Allocate space to and initialize the buffer that will
+                   contain the commit data.
 
-   -add_buffer(): Adds a line of content into the buffer to be committed into
-                  the object store.
+   -add_buffer(): Adds one item of the commit data to the buffer.
 
-   -prepend_integer(): Populate the buffer offset.
+   -prepend_integer(): Prepend the size of the commit data in bytes to the
+                       buffer.
 
-   -finish_buffer(): Final prep for the buffer so that the new commit ready
-                     to be added to object store.
+   -finish_buffer(): Call the prepend_integer() function to prepend the size 
+                     of the commit data to the buffer, and then prepend the
+                     object tag to the buffer.
 
-   -ORIG_OFFSET: The default offset for the buffer to be committed.
+   -ORIG_OFFSET: Token that defines the number of bytes at the beginning of 
+                 the buffer that are allocated for the object tag and the 
+                 object data size.
 
-   -BLOCKING: The initial memory size to allocate for the buffer.
+   -BLOCKING: Token that defines the initial memory size to allocate to the 
+              buffer. Set to 16384 bytes.
 */
 
 #ifndef BGIT_WINDOWS
-/* Include header file for working with user account structures (like `passwd`) */
+/*
+ * Include header file that contains the template for the passwd structure
+ * for storing a user's login account information.
+ */
 #include <pwd.h>
 #endif
-
-/* Include header file for workin with date and time structures. */
+/*
+ * Include header file that contains the template for the tm structure for
+ * storing data and time information.
+ */
 #include <time.h>
 
-#define BLOCKING (1ul << 14) /* The initial memory size to allocate for the buffer. */
-#define ORIG_OFFSET (40) /* The default offset for the buffer to be committed. */
+/* 16384 bytes, the initial memory size to allocate to the buffer. */
+#define BLOCKING (1ul << 14) 
+/*
+ * Defines the number of bytes at the beginning of the buffer that are 
+ * allocated for the object tag and the object data size.
+ */
+#define ORIG_OFFSET (40) 
 
 /*
  * Function: `init_buffer`
  * Parameters:
- *      -bufp: Buffer string to initialize.
- *      -sizep: Size of the buffer string.
- * Purpose: Allocate memory and offset size for buffer.
+ *      -bufp: Pointer to a pointer to a buffer to allocate and initialize.
+ *      -sizep: Pointer to the size of filled portion of the buffer.
+ * Purpose: Allocate space to and initialize the buffer that will contain the 
+ *          commit data.
  */
 static void init_buffer(char **bufp, unsigned int *sizep)
 {
-    char *buf = malloc(BLOCKING); /* Allocate memory for buffer. */
-    memset(buf, 0, ORIG_OFFSET); /* Copies '0' (null byte) into first 40 byes of buffer. */
-    *sizep = ORIG_OFFSET; /* Set buffer size to default offset value. */
-    *bufp = buf; /* Set the passed-in buffer. */
+    /* Allocate memory to buffer. */
+    char *buf = malloc(BLOCKING); 
+    /* Copy null byte into first 40 bytes of the buffer. */
+    memset(buf, 0, ORIG_OFFSET); 
+    /* Size of filled portion of buffer. */
+    *sizep = ORIG_OFFSET; 
+    /* Set the commit object buffer to the allocated space. */
+    *bufp = buf; 
 }
 
 /*
  * Function: `add_buffer`
  * Parameters:
- *      -bufp: The initialized buffer to add content to.
- *      -sizep: The size of the buffer.
- *      -fmt: Variable argument list.
- * Purpose: Adds a line of content into the buffer to be committed into the object store.
+ *      -bufp: Pointer to a pointer to the commit object buffer.
+ *      -sizep: Pointer to the size of the filled portion of the buffer.
+ *      -fmt: Format string.
+ * Purpose: Adds one item of the commit data to the buffer.
  */
 static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 {
-    char one_line[2048]; /* Represents a line to add to buffer. */
-    va_list args; /* References variable argument list. */
-    int len; /* Length of variable argument list. */
-    unsigned long alloc, size, newsize; /* Memory sizes. */
-    char *buf; /* The buffer. */
+    char one_line[2048];                /* String to add to the buffer. */
+    va_list args;                       /* A variable argument list. */
+    int len;                            /* Length of string in one_line. */
+    unsigned long alloc, size, newsize; /* Variables to track buffer size. */
+    char *buf;                          /* Pointer to commit object buffer. */
 
-    va_start(args, fmt); /* Handle variable argument list. */
+    /* Initialize args to point to the first unnamed argument after fmt. */
+    va_start(args, fmt); 
 
-    /* Populate `one_line` with the variable argument list parameters. */
+    /*
+     * Use argument list args to construct the fmt string and write the string 
+     * to one_line. 
+     */
     len = vsnprintf(one_line, sizeof(one_line), fmt, args);
 
-    va_end(args); /* End parsing variable argument list. */
-    size = *sizep; /* Set passed-in size. */
-    newsize = size + len; /* Combine passed-in size and length of `one_line`. */
-    alloc = (size + 32767) & ~32767; /* Set memory to allocate for the buffer. */
-    buf = *bufp; /* Set passed-in buffer. */
+    /* Clean up args variable list object. */
+    va_end(args); 
+    /* Size of current filled portion of commit object buffer. */
+    size = *sizep; 
+    /* Add length of one_line to the size of the filled buffer portion. */
+    newsize = size + len; 
+    /* Calculate minimum buffer size. Should be a multiple of 32768 bytes. */
+    alloc = (size + 32767) & ~32767; 
+    /* Set local pointer to point to the commit object buffer. */
+    buf = *bufp; 
 
-    /* If the new buffer size will be greater that default memory to allocate... */
+    /* 
+     * Increase the buffer size if the calculated size of filled portion of 
+     * the buffer is greater than the calculated minimum buffer size. 
+     */
     if (newsize > alloc) {
-        alloc = (newsize + 32767) & ~32767; /* Increase the size to allocate. */
-        buf = realloc(buf, alloc); /* Updated memory allocated for buffer. */
-        *bufp = buf; /* Set the buffer. */
+        /*
+         * Calculate minimum buffer size. Should be a multiple of 32768 
+         * bytes. 
+         */
+        alloc = (newsize + 32767) & ~32767; 
+        /* Increase the buffer size. */
+        buf = realloc(buf, alloc); 
+        /*
+         * Set the commit object buffer pointer to point to the reallocated
+         * buffer. 
+         */
+        *bufp = buf; 
     }
-    *sizep = newsize; /* Update buffer size to new value */
-    memcpy(buf + size, one_line, len); /* Copy `one_line` into the buffer. */
+    /* New size of filled portion of commit object buffer. */
+    *sizep = newsize; 
+    /*
+     * Append one_line after the filled portion of the commit object 
+     * buffer. 
+     */
+    memcpy(buf + size, one_line, len); 
 }
 
 /*
