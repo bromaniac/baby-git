@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 {
     /* Used to store the 20-byte representation of an SHA1 hash. */
     unsigned char sha1[20];
-    /* The object type (blob, tree, or commit). */
+    /* Used to store the object type (blob, tree, or commit). */
     char type[20];
     /* Buffer to store the object data. */
     void *buf;

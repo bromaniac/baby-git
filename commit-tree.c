@@ -74,7 +74,7 @@
    -vsnprintf(char *s, size_t n, const char *format, va_list arg):
         Construct `format` using the variable argument list `arg` and write 
         the formatted string into `s`, with `n` specifying the maximum number 
-        of characters that can be written to `s`, including the null 
+        of characters that should be written to `s`, including the null 
         terminating character.
 
    -va_end(va_list ap): Marco that performs cleanup for a va_list object that
