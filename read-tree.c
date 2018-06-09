@@ -109,9 +109,10 @@ static int unpack(unsigned char *sha1)
     char type[20];        /* The object type. */
 
     /*
-     * Read an object from the object store, inflate it, and return a pointer
-     * to the object data (without the prepended metadata). Store the object
-     * type and data size in `type` and `size` respectively.
+     * Read an object with hash value `sha1` from the object store, inflate 
+     * it, and return a pointer to the object data (without the prepended 
+     * metadata). Store the object type and data size in `type` and `size` 
+     * respectively.
      */
     buffer = read_sha1_file(sha1, type, &size);
 
@@ -189,7 +190,7 @@ int main(int argc, char **argv)
         usage("read-tree <key>");
 
     /* 
-     * Convert the 40-character hexadicimal representation of the given SHA1 
+     * Convert the given 40-character hexadicimal representation of an SHA1 
      * hash value to the equivalent 20-byte representation. If conversion 
      * fails (for example if the hexadecimal representation has a character 
      * outside the valid hexadecimal range of 0-9, a-f, or A-F), print usage 

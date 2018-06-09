@@ -37,170 +37,129 @@
  */
 
 #include "cache.h"
-/*  The above 'include' allows use of the following functions and
-    variables from <cache.h> header file, ranked in order of first use
-    in this file. Most are functions/macros from standard C libraries
-    that are `#included` in <cache.h>. Function names are followed by
-    parenthesis whereas variable/struct names are not:
+/* The above 'include' allows use of the following functions and
+   variables from "cache.h" header file, ranked in order of first use
+   in this file. Most are functions/macros from standard C libraries
+   that are `#included` in "cache.h". Function names are followed by
+   parenthesis whereas variable/struct names are not:
 
-    -get_sha1_hex(): Convert the SHA1 passed in as a command line
-                     argument to the proper hexadecimal format.
-                     Sourced from <cache.h> and defined in
-                     <read-cache.c>.
+   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+                    SHA1 hash value to the equivalent 20-byte representation.
 
-	-usage(): Print a read-cache error to the screen. Sourced from
-			  <cache.h> and defined in <read-cache.c>.
+   -usage(): Print an error message and exit.
 
-	-read_sha1_file(): Read-in the contents of the file identified by
-					   the SHA1 passed in as a command line argument
-					   into a buffer to be ouputted later.
+   -read_sha1_file(): Locate an object in the object database, read and 
+                      inflate it, then return the inflated object data 
+                      (without the prepended metadata).
 
-	-mkstemp(template): Use a `template` filename to create a file
-						descriptor to a newly opened file for writing.
-						Sourced from <stdlib.h>.
+   -mkstemp(template): Modifies `template` to generate a unique filename, then
+                       opens the file for reading and writing and returns a 
+                       file descriptorfor the file. Sourced from <stdlib.h>.
 
-	-write(fd, buf, n): Write `n` bytes from buffer `buf` to file
-						described by file descriptor `fd`.
+   -write(fd, buf, n): Write `n` bytes from buffer `buf` to file associated
+                       with file descriptor `fd`.
 
-	-strcpy(str1, str2): Copy the value of str2 into the memory
-						 allocated for str1.
+   -strcpy(str1, str2): Copy string str2 to string str1, including the
+                        terminating null character.
 
-	-printf(message): Print message to standard output stdout.
-					  Sourced from <stdio.h>.
+   -printf(message, ...): Write `message` to standard output stream stdout.  
+                          Sourced from <stdio.h>.
 
-	****************************************************************
+   ****************************************************************
 
-    The following variables and functions are defined locally in
-    this file:
+   The following variables and functions are defined in this source file:
 
-    -main(argc, argv): The main function which runs each time the
-                       ./cat-file command is run.
+   -main(argc, argv): The main function which runs each time the ./cat-file 
+                      command is run.
 
-    -argc: The number of command line arguments supplied when
-           executing ./cat-file.
+   -argc: The number of command line arguments supplied when executing 
+          ./cat-file.
 
-    -argv: Array containing command line argument strings.
+   -argv: Array containing command line argument strings.
 
-	-sha1: String represeting the SHA1 of the object desired to
-           be retrieved from the object store.
+   -sha1: 20-byte representation of an SHA1 hash.
 
-	-type: The type of the object being retrieved from the object
-           store, i.e. `blob` or `tree`, etc.
+   -type: The type of the object that was read from the object store (blob, 
+          tree, or commit).
 
-	-buf: A buffer to temporarily store the contents of the
-          retrieved object from the object store before it is
-          written to the output file `temp_git_file_XXXXXX`.
+   -buf: A buffer to store the object data.
 
-	-size: The size in bytes of the retrieved content.
+   -size: The size in bytes of the object data.
 
-	-template: A template used to generate output file names.
+   -template: A template string used to generate a unique output filename.
 
-	-fd: A file descriptor respresenting the output file to be
-         created.
-
+   -fd: A file descriptor associated with the output file.
 */
 
 /*
  * Function: `main`
  * Parameters:
- *      -argc: The number of command-line arguments supplied, inluding the command itself.
- *      -argv: An array of the command line arguments, including the command itself.
- * Purpose: Standard `main` function definition. Runs when the executable `commit-tree` is
- *          run from the command line.
+ *      -argc: The number of command line arguments supplied, inluding the 
+ *             command itself.
+ *      -argv: An array of the command line arguments, including the command 
+ *             itself.
+ * Purpose: Standard `main` function definition. Runs when the executable
+ *          `cat-file` is run from the command line.
  */
 int main(int argc, char **argv)
 {
+    /* Used to store the 20-byte representation of an SHA1 hash. */
+    unsigned char sha1[20];
+    /* The object type (blob, tree, or commit). */
+    char type[20];
+    /* Buffer to store the object data. */
+    void *buf;
+    /* The size in byte of the object data. */
+    unsigned long size;
+    /* A template string used to generate a unique output filename. */
+    char template[] = "temp_git_file_XXXXXX";
+    /* File descriptor for the output file. */
+    int fd;
+
+    /*  
+     * Validate the number of command line arguments and convert the given 
+     * 40-character hexadicimal representation of an SHA1 hash value to the 
+     * equivalent 20-byte representation. If either one fails, display usage
+     * and exit.
+     */
+    if (argc != 2 || get_sha1_hex(argv[1], sha1))
+        usage("cat-file: cat-file <sha1>");
+
     /*
-     * String to hold SHA1 passed-in as command-line argument.
-     * Note it is empty at first and gets populated by the
-     * get_sha1_hex() function which takes the empty variable
-     * as an argument and populates it with the converted SHA1.
+     * Read an object with hash value `sha1` from the object store, inflate 
+     * it, and return a pointer to the object data (without the prepended 
+     * metadata). Store the object type and data size in `type` and `size` 
+     * respectively.
      */
-	unsigned char sha1[20];
+    buf = read_sha1_file(sha1, type, &size);
+    
+    /*
+     * Exit if `buf` is a null pointer, i.e., reading the object from the
+     * object store failed.
+     */
+    if (!buf)
+        exit(1);
 
     /*
-     * String to hold the type (`blob` or `tree`) of the
-     * requested content. Note it is empty at first and gets
-     * populated by read_sha1_file() function which takes the
-     * empty variable as an argument and populates it.
+     * Modify `template` to generate a unique filename, then open the file for 
+     * reading and writing and return a file descriptorfor the file. The 
+     * `XXXXXX` in the template is relaced with a randomly generated 
+     * alphanumeric string to generate a unique filename.
      */
-	char type[20];
+    fd = mkstemp(template);
 
-	/*  
-     * Buffer to hold the content of the requested blob or tree.
-     * Note it is empty at first and gets populated by the return
-	 * of the read_sha1_file() function. 
+    /* If mkstemp() fails, print usage message and exit. */
+    if (fd < 0)
+        usage("unable to create tempfile");
+
+    /*
+     * Write the object data, which has length `size` bytes, to the output 
+     * associated with `fd`. If the number of bytes written does not equal the
+     * object data size, set object `type` to "bad".
      */
-	void *buf;
+    if (write(fd, buf, size) != size)
+        strcpy(type, "bad");
 
-	/*
-     * Integer to hold the size in bytes of the requested content
-     * Note it is empty at first and gets populated by the
-	 * read_sha1_file() function which takes a pointer to the empty
-	 * variable as an argument and populates it.
-     */
-	unsigned long size;
-
-	/*
-	 * Template filename used to create a unique output file name
-	 * to store the requested output content.
-	 */
-	char template[] = "temp_git_file_XXXXXX";
-
-	/*
-	 * File descriptor representing the output file to be created. 
-	 */
-	int fd;
-
-	/*
-	 * Make sure program was passed in one command line argument
-	 * (it technically looks for 2 since the initial command itself
-	 * counts) and that the SHA1 has a valid hexadecimal conversion.
-	 * Or else output a usage message. If successful this also
-	 * populates the `sha1` variable with the converted hex value.
-	 */
-	if (argc != 2 || get_sha1_hex(argv[1], sha1))
-		usage("cat-file: cat-file <sha1>");
-
-	/*
-	 * Pass the now populated `sha1` variable into the
-	 * `read_sha1_file()` function along with still empty `type`
-	 * and `size` variables, which will be populated as a part of
-	 * the function. Store the output in our `buf` buffer variable.
-	 */
-	buf = read_sha1_file(sha1, type, &size);
-	
-	/*
-	 * If the buffer wasn't populated correctly, exit the program.
-	 */
-	if (!buf)
-		exit(1);
-
-	/*
-	 * Create the file descriptor `fd` based on the `template`
-	 * defined above. The `XXXXXX` in the template will be relaced
-	 * with a randomly generated alphanumeric string to create a
-	 * unique filename.
-	 */
-	fd = mkstemp(template);
-
-	/*  
-     * If file descriptor creation fails, print usage message.
-     */
-	if (fd < 0)
-		usage("unable to create tempfile");
-
-	/*
-	 * Write `size` bytes from our `buffer` which contains the
-	 * requested content from the object store to our file
-	 * descriptor `fd` and make sure that size matches up. If not,
-	 * set the `type` to "bad".
-	 */
-	if (write(fd, buf, size) != size)
-		strcpy(type, "bad");
-
-	/*
-	 * Print the generated `template` filename and `type` to screen.
-	 */
-	printf("%s: %s\n", template, type);
+    /* Print the output filename and object type to screen. */
+    printf("%s: %s\n", template, type);
 }
