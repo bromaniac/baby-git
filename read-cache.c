@@ -216,15 +216,13 @@
 
    -usage(): Print an error message.
 
-   -hexval(): Convert a hexadecimal character to its decimal representation.
+   -hexval(): Convert a hexadecimal symbol to its decimal equivalent.
 
    -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
-                    SHA1 hash value to the equivalent 20-byte decimal 
-                    representation.
+                    SHA1 hash value to the equivalent 20-byte representation.
 
-   -sha1_to_hex(): Convert a 20-byte decimal representation of an SHA1 hash
-                   value to the equivalent 40-character hexadicimal 
-                   representation.
+   -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
+                   the equivalent 40-character hexadicimal representation.
 
    -sha1_file_name(): Build the path of an object in the object database
                       using the object's SHA1 hash value.
@@ -276,7 +274,7 @@ void usage(const char *err)
 /* Function: `hexval`
  * Parameters:
  *      -c: Hexadecimal character to convert to decimal.
- * Purpose: Convert a hexadecimal character to its decimal representation.
+ * Purpose: Convert a hexadecimal symbol to its decimal equivalent.
  */
 static unsigned hexval(char c)
 {
@@ -302,11 +300,12 @@ static unsigned hexval(char c)
 /*
  * Function: `get_sha1_hex`
  * Parameters:
- *      -hex: String containing hexadecimal representation of SHA1 hash value.
- *      -sha1: Array for storing the decimal representation of the SHA1 hash
+ *      -hex: String containing the hexadecimal representation of an SHA1 hash 
+              value.
+ *      -sha1: Array for storing the 20-byte representation of the SHA1 hash
  *             value.
  * Purpose: Convert a 40-character hexadicimal representation of an SHA1 hash 
- *          value to the equivalent 20-byte decimal representation.
+ *          value to the equivalent 20-byte representation.
  */
 int get_sha1_hex(char *hex, unsigned char *sha1)
 {
@@ -317,8 +316,9 @@ int get_sha1_hex(char *hex, unsigned char *sha1)
      */
     for (i = 0; i < 20; i++) {
         /*
-         * The decimal equivalent of the first hex digit will form the 4 high 
-         * bits of val; that of the second hex digit will form the 4 low bits.
+         * The decimal equivalent of the first hexadecimal digit will form 
+         * the 4 high bits of val; that of the second hex digit will form the 
+         * 4 low bits.
          */
         unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
         /* Return -1 if val is larger than 255. */
@@ -333,26 +333,29 @@ int get_sha1_hex(char *hex, unsigned char *sha1)
 /*
  * Function: `sha1_to_hex`
  * Parameters:
- *      -sha1: Array containing decimal representation of SHA1 hash value.
- * Purpose: Convert a 20-byte decimal representation of an SHA1 hash value to 
- *          the equivalent 40-character hexadicimal representation.
+ *      -sha1: Array containing 20-byte representation of an SHA1 hash value.
+ * Purpose: Convert a 20-byte representation of an SHA1 hash value to the
+ *          equivalent 40-character hexadicimal representation.
  */
 char *sha1_to_hex(unsigned char *sha1)
 {
     /* String for storing the 40-character hexadicimal representation. */
     static char buffer[50];
-    /* Lookup array for converting a hexadecimal symbol to decimal. */
+    /*
+     * Lookup array for getting the hexadecimal representation of a number
+     * from 0 to 15. 
+     */
     static const char hex[] = "0123456789abcdef";
     /* Pointer used for filling up the buffer string. */
     char *buf = buffer;
     int i;
 
     /*
-     * Convert each decimal number (ranging from 0 to 255) to a two-digit 
-     * hexadecimal number (ranging from 00 to ff). 
+     * Get the two-digit hexadecimal representation (ranging from 00 to ff) of
+     * a number (ranging from 0 to 255).
      */
     for (i = 0; i < 20; i++) {
-        unsigned int val = *sha1++;   /* Get the current decimal number. */
+        unsigned int val = *sha1++;   /* Get the current number. */
         *buf++ = hex[val >> 4];       /* Convert the 4 high bits to hex. */
         *buf++ = hex[val & 0xf];      /* Convert the 4 low bits to hex. */
     }
@@ -409,15 +412,19 @@ char *sha1_file_name(unsigned char *sha1)
      * Fill in the rest of the object path (object directory and filename)
      * using the object's SHA1 hash value.
      *
-     * Convert each decimal number (ranging from 0 to 255) to a two-digit 
-     * hexadecimal number (ranging from 00 to ff).  The first two-digit
-     * hexadecimal number will form part of the object directory.  The rest of 
-     * two-digit hexadecimal numbers will comprise the object filename. 
+     * Convert each number in the sha1 array (ranging from 0 to 255) to a 
+     * two-digit hexadecimal number (ranging from 00 to ff). The first 
+     * two-digit hexadecimal number will form part of the object directory. 
+     * The rest of the two-digit hexadecimal numbers will comprise the object 
+     * filename. 
      */
     for (i = 0; i < 20; i++) {
-        /* Lookup array for converting a hexadecimal symbol to decimal. */
+        /*
+         * Lookup array for getting the hexadecimal representation of a 
+         * number from 0 to 15. 
+         */
         static char hex[] = "0123456789abcdef";
-        /* Get the current decimal number. */
+        /* Get the current number from sha1. */
         unsigned int val = sha1[i];
         /*
          * Set the index of the base array. This will be name + 0, name + 3,

@@ -113,10 +113,10 @@
    -sha1_dir: The path to the object store.
 
    -path: A dynamic character string that is used to build the path to each 
-          subdirectory in the object store, i.e.  one subdirectory for each 
+          subdirectory in the object store, i.e., one subdirectory for each 
           number between 0 and 255 in hexadecimal. The name of each 
-          subdirectory will represent the first two numbers of the SHA1 
-          hashes of the objects to be stored in that subdirectory.
+          subdirectory will represent the first two digits of the SHA1 hashes
+          of the objects stored in that subdirectory.
 
    -len: The length of the constant string in the `sha1_dir` variable.
 
@@ -141,9 +141,9 @@
 int main(int argc, char **argv)
 {
     /* 
-     * The `char *` format of the variables below allows them to
-     * be used as strings of chars instead of just holding one
-     * single char. Just think of these as strings.
+     * The `char *` format of the variables below allows them to be used as 
+     * strings of characterss instead of just holding one single character. 
+     * Just think of these as strings.
      */
     char *sha1_dir, *path;
 
@@ -151,9 +151,9 @@ int main(int argc, char **argv)
     int len, i, fd;
 
     /*
-     * Attempt to create a directory called `.dircache`in the
-     * current directory. If it fails, `mkdir()` will return
-     * `-1` and the program will print a message and exit.
+     * Attempt to create a directory called `.dircache` in the current 
+     * directory. If it fails, `mkdir()` will return `-1` and the program will 
+     * print a message and exit.
      */
     if (MKDIR(".dircache") < 0) {
         perror("unable to create .dircache");
@@ -161,18 +161,17 @@ int main(int argc, char **argv)
     }
     
     /*
-     * Set the `sha1_dir` (i.e. the path to the object store)
-     * to the value of the `DB_ENVIRONMENT` environment
-     * variable which defaults to `SHA1_FILE_DIRECTORY` as 
-     * defined in "cache.h". If the environment variable is
-     * not set (and it most likely won't be), `sha1_dir`
-     * will be null (technically a null pointer, but whatever).
+     * Set the `sha1_dir` (i.e. the path to the object store) to the value of 
+     * the `DB_ENVIRONMENT` environment variable, which defaults to 
+     * `SHA1_FILE_DIRECTORY` as defined in "cache.h". If the environment 
+     * variable is not set (and it most likely won't be), getenv() will return
+     * a null pointer. 
      */
     sha1_dir = getenv(DB_ENVIRONMENT);
 
     /*
-     * This block will only run if `sha1_dir` is NOT null,
-     * i.e. if the environment variable above was set.
+     * This block will only run if `sha1_dir` is NOT null, i.e., if the 
+     * environment variable above was set.
      */
     if (sha1_dir) {
         struct stat st;
@@ -182,25 +181,23 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Set `sha1_dir` to the default value `.dircache/objects`
-     * as defined in "cache.h". Then print a message to the
-     * screen conveying this.
+     * Set `sha1_dir` to the default value `.dircache/objects` as defined in 
+     * "cache.h", then print a message to the screen conveying this.
      */
     sha1_dir = DEFAULT_DB_ENVIRONMENT;
     fprintf(stderr, "defaulting to private storage area\n");
 
     /*
-     * Set `len` to the length of the string in `sha1_dir`.
-     * This will be used later to build the subdirectories
-     * in the object store where the sha1-named files will
-     * be stored.
+     * Set `len` to the length of the string in `sha1_dir`. This will be used 
+     * later to build the subdirectories in the object store where 
+     * hash-indexed objects will be stored.
      */
     len = strlen(sha1_dir);
 
     /*
-     * Attempt to create a directory inside `.dircache` called
-     * `objects`. If it fails, `mkdir()` will return
-     * `-1` and the program will print a message and exit.
+     * Attempt to create a directory inside `.dircache` called `objects`. If 
+     * it fails, `mkdir()` will return `-1` and the program will print a 
+     * message and exit.
      */
     if (MKDIR(sha1_dir) < 0) {
         if (errno != EEXIST) {
@@ -210,44 +207,36 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Reserve a chunk of memory for the `path` variable. The
-     * size of the chunk equals `len` (size in bytes of
-     * `sha1_dir1` + 40 bytes, long enough to accomodate a 40-digit
-     * hexadecimal SHA1 hash value. 
+     * Allocate space for `path` with size len` (size in bytes of `sha1_dir1`) 
+     + + 40 bytes, which is long enough to accomodate a 40-digit hexadecimal 
+     * SHA1 hash value. 
      */
     path = malloc(len + 40);
 
-    /*
-     * Copy the first `len` characters of `sha1_dir` into the
-     * memory chunk reserved for `path`.
-     */
+    /* Copy the first `len` characters of `sha1_dir` to `path`. */
     memcpy(path, sha1_dir, len);
 
     /*
-     * Run this loop 256 times, to create the 256 
-     * subdirectories inside the `.dircache/objects/`
-     * directory. Each subdirectory will be named with the
-     * the first two digits of a number between 0 and 255 in
-     * hexadecimal. Each subdirectory will be used to hold the 
-     * objects whose SHA1 hash values start with those two digits.
+     * Run this loop 256 times, to create the 256 subdirectories inside the 
+     * `.dircache/objects/` directory. The subdirectories will be named '00'
+     * to 'ff', which are the hexadecimal representations of the numbers 0 to 
+     * 255. Each subdirectory will be used to hold the objects whose SHA1 hash 
+     * values in hexadecimal representation start with those two digits.
      */
     for (i = 0; i < 256; i++) {
         /*
-         * Convert `i` to a two-digit hexadecimal number
-         * and tack it onto the path variable after the
-         * `.dircache/objects/` part. That way, each time
-         * through the loop we build up a path like:
-         * `.dircache/objects/00`, `.dircache/objects/01`
-         * ...
-         * all the way up to...
-         * `.dircache/objects/fe`, `.dircache/objects/ff`.
+         * Convert `i` to a two-digit hexadecimal number and append it to the 
+         * path variable after the `.dircache/objects/` part. That way, each 
+         * time through the loop we build up one of the following paths: 
+         * `.dircache/objects/00`, `.dircache/objects/01`, ...,
+         * all the way up to
+         * ..., `.dircache/objects/fe`, `.dircache/objects/ff`.
          */
         sprintf(path+len, "/%02x", i);
 
         /*
-         * Attempt to create each subdirectory. If it fails,
-         * `mkdir()` will return `-1` and the program will
-         * print a message and exit.
+         * Attempt to create the current subdirectory. If it fails, `mkdir()` 
+         * will return `-1` and the program will print a message and exit.
          */
         if (MKDIR(path) < 0) {
             if (errno != EEXIST) {

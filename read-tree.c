@@ -73,13 +73,11 @@
 
    -usage(): Print an error message. 
 
-   -sha1_to_hex(): Convert a 20-byte decimal representation of an SHA1 hash
-                   value to the equivalent 40-character hexadicimal 
-                   representation.
+   -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
+                   the equivalent 40-character hexadicimal representation.
 
    -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
-                    SHA1 hash value to the equivalent 20-byte decimal 
-                    representation.
+                    SHA1 hash value to the equivalent 20-byte representation.
 
    -read_sha1_file(): Locate an object in the object database, read and 
                       inflate it, then return the inflated object data 

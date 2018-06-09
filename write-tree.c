@@ -239,8 +239,7 @@ int main(int argc, char **argv)
         memcpy(buffer + offset, ce->sha1, 20);
 
         /*
-         * Increment the offset by 20 bytes, the length of an SHA1 hash in
-         * decimal representation.
+         * Increment the offset by 20 bytes, the length of an SHA1 hash.
          */
         offset += 20;
     }
