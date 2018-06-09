@@ -115,13 +115,13 @@ static int unpack(unsigned char *sha1)
      */
     buffer = read_sha1_file(sha1, type, &size);
 
-    /* Print usage message if `buffer` is empty or null. */
+    /* Print usage message if `buffer` is empty or null, then exit. */
     if (!buffer)
         usage("unable to read sha1 file");
 
     /*
      * Print usage message if the object corresponding to the hash `sha1` is 
-     * not a tree. 
+     * not a tree, then exit. 
      */
     if (strcmp(type, "tree"))
         usage("expected a 'tree' node");
@@ -141,7 +141,7 @@ static int unpack(unsigned char *sha1)
         /*
          * Verify the current size of the buffer and get the mode of the file
          * corresponding to the current blob. If either fails, display usage 
-         * message.
+         * message then exit.
          */
         if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
             usage("corrupt 'tree' file");

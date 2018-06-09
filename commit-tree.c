@@ -433,7 +433,7 @@ int main(int argc, char **argv)
     /*
      * Show usage message if there are less than 2 command line arguments or 
      * if an object corresponding to the given tree SHA1 hash does not exist
-     * in the object store.
+     * in the object store. Then exit.
      */
     if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
         usage("commit-tree <sha1> [-p <sha1>]* < changelog");
@@ -441,7 +441,8 @@ int main(int argc, char **argv)
     /*
      * Loop through the parent commit SHA1 hashes in the command line
      * arguments. Show usage message if the corresponding object does not
-     * exist in the object store. Otherwise, increment the parent counter.
+     * exist in the object store, then exit. Otherwise, increment the parent 
+     * counter.
      */
     for (i = 2; i < argc; i += 2) {
         char *a, *b;
@@ -465,7 +466,7 @@ int main(int argc, char **argv)
      */
     pw = getpwuid(getuid());
 
-    /* Print an error message if getpwuid() returns null. */
+    /* Print an error message and exit if getpwuid() returns null. */
     if (!pw)
         usage("You don't exist. Go away!");
 

@@ -142,17 +142,12 @@
    -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
 
-   -open(path): Establishes the connection between a file and a file
-                descriptor.  It creates an open file description that refers 
-                to a file and a file descriptor that refers to that open file 
-                description. The file descriptor is used by other I/O 
-                functions to refer to that file. The `path` argument points to 
-                a pathname naming the file.  Upon successful completion, the 
-                function shall open the file and return a non-negative integer 
-                representing the lowest numbered unused file descriptor. 
-                Otherwise, -1 shall be returned and errno set to indicate the 
-                error.  No files shall be created or modified if the function 
-                returns -1. Sourced from <fcntl.h>.
+   -open(path, flags, perms): Open file in `path` for reading and/or writing 
+                              as specified in `flags` and return a file 
+                              descriptor that refers to the open file
+                              description. If the file does not exist, it is
+                              created with the permssions in `perms`. Sourced 
+                              from <fcntl.h>.
 
    -O_RDONLY: Flag for the open() function indicating to open the file for
               reading only. Sourced from <fcntl.h>.
