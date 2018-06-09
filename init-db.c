@@ -161,8 +161,8 @@ int main(int argc, char **argv)
     }
     
     /*
-     * Set the `sha1_dir` (i.e. the path to the object store) to the value of 
-     * the `DB_ENVIRONMENT` environment variable, which defaults to 
+     * Set `sha1_dir` (i.e. the path to the object store) to the value of the
+     * `DB_ENVIRONMENT` environment variable, which defaults to 
      * `SHA1_FILE_DIRECTORY` as defined in "cache.h". If the environment 
      * variable is not set (and it most likely won't be), getenv() will return
      * a null pointer. 

@@ -91,7 +91,7 @@
    -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
                     SHA1 hash value to the equivalent 20-byte representation.
 
-   -usage(): Print an error message.
+   -usage(): Print an error message and exit.
 
    -strcmp(s1, s2): Compares the string pointed to by `s1` to the string 
                     pointed to by `s2`.

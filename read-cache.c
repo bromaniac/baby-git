@@ -214,7 +214,7 @@
 
    The following variables and functions are defined in this source file:
 
-   -usage(): Print an error message.
+   -usage(): Print an error message and exit.
 
    -hexval(): Convert a hexadecimal symbol to its decimal equivalent.
 
@@ -291,8 +291,9 @@ static unsigned hexval(char c)
         return c - 'A' + 10;
 
     /*
-     * Return bitwise 'not' of 0, which is 1. This indicates that `c` was not 
-     * a hexadecimal symbol, i.e., failure. 
+     * If `c` is not a valid hexadicimal symbol, return bitwise 'not' of 0, 
+     * which is a large number (greater than 255) for an unsigned int data 
+     * type. 
      */
     return ~0;
 }

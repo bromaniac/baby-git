@@ -71,7 +71,7 @@
    -printf(message, ...): Write `message` to standard output stream stdout.  
                           Sourced from <stdio.h>.
 
-   -usage(): Print an error message. 
+   -usage(): Print an error message and exit. 
 
    -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
                    the equivalent 40-character hexadicimal representation.
@@ -170,49 +170,51 @@ static int unpack(unsigned char *sha1)
  *               itself.
  * Purpose: Standard `main` function definition. Runs when the executable 
  *          `read-tree` is run from the command line. Ensures proper command 
- *          syntax and calls `unpack()` function above to print tree's content 
- *          to the screen.
+ *          syntax and calls `unpack()` function above to print a tree's 
+ *          content to the screen.
  */
 int main(int argc, char **argv)
 {
-    int fd; /* Declare an integer to hold the file descriptor. */
-    unsigned char sha1[20]; /* String to hold the 20 byte binary hash of the tree. */
+    /* A file descriptor. */
+    int fd; 
+    /* String to hold the 20-byte representation of a hash value. */
+    unsigned char sha1[20]; 
 
     /*  
-     * Make sure program was passed in one command line argument
-     * (it technically looks for 2 since the initial command itself
-     * counts). If not, print a usage message.
+     * Validate the number of command line arguments, which should be equal to
+     * 2 since the initial command itself is also counted. If not, print a 
+     * usage message and exit.
      */
     if (argc != 2)
         usage("read-tree <key>");
 
-    /*
-     * Convert hexadecimal string from command line argument to
-     * binary SHA1 representation. If conversion fails, (for example
-     * if the hex string passed-in has a character outside the valid
-     * hex range of 0-9, a-f, or A-F), print usage message.
+    /* 
+     * Convert the 40-character hexadicimal representation of the given SHA1 
+     * hash value to the equivalent 20-byte representation. If conversion 
+     * fails (for example if the hexadecimal representation has a character 
+     * outside the valid hexadecimal range of 0-9, a-f, or A-F), print usage 
+     * message and exit.
      */
     if (get_sha1_hex(argv[1], sha1) < 0)
         usage("read-tree <key>");
 
-    /*  
-     * Set the `sha1_file_directory` (i.e. the path to the object store)
-     * to the value of the `DB_ENVIRONMENT` environment
-     * variable which defaults to `SHA1_FILE_DIRECTORY` as 
-     * defined in "cache.h". If the environment variable is
-     * not set (and it most likely won't be), `sha1_file_directory`
-     * will be null (technically a null pointer, but whatever).
+    /*
+     * Set `sha1_file_directory` (i.e. the path to the object store) to the 
+     * value of the `DB_ENVIRONMENT` environment variable, which defaults to 
+     * `SHA1_FILE_DIRECTORY` as defined in "cache.h". If the environment 
+     * variable is not set (and it most likely won't be), getenv() will return
+     * a null pointer. 
      */
     sha1_file_directory = getenv(DB_ENVIRONMENT);
 
     /*  
-     * If object store path was not set from environment variable above,
-     * set it to the default value `.dircache/objects` from "cache.h".
+     * If object store path was not set from environment variable above, set 
+     * it to the default value, `.dircache/objects`, from "cache.h".
      */
     if (!sha1_file_directory)
         sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 
-    /* Call `unpack()` with the binary hash of the tree. */
+    /* Call `unpack()` with the binary SHA1 hash of the tree. */
     if (unpack(sha1) < 0)
         usage("unpack failed");
 
