@@ -55,11 +55,10 @@
                   specified by `size` and whose value is unspecified. Sourced 
                   from <stdlib.h>.
 
-   -mmap(addr, len, prot, flags,
-         file_descriptor, offset): Establish a mapping between a process'
-                                   address space and a file, shared memory
-                                   object, or typed memory object. Sourced
-                                   from <sys/mman.h>.
+   -mmap(addr, len, prot, flags, file_descriptor, offset): 
+        Establish a mapping between a process' address space and a file, 
+        shared memory object, or typed memory object. Sourced from 
+        <sys/mman.h>.
 
    -PROT_READ: Flag for the mmap() function's `prot` parameter describing
                the desired memory protection of the mapping. `PROT_READ`
@@ -123,16 +122,14 @@
    -SHA1_Init(): Initializes a SHA_CTX structure. Sourced from 
                  <openssl/sha.h>. 
 
-   -SHA1_Update(SHA_CTX *c, const void *data, 
-                size_t len): Can be called repeatedly to calculate the hash
-                             value of chunks of data (len bytes from data). 
-                             Sourced from <openssl/sha.h>.
+   -SHA1_Update(SHA_CTX *c, const void *data, size_t len): 
+        Can be called repeatedly to calculate the hash value of chunks of data 
+        (len bytes from data). Sourced from <openssl/sha.h>.
 
-   -SHA1_Final(unsigned char *md, 
-               SHA_CTX *c): Places the message digest in md, which must have 
-                            space for SHA_DIGEST_LENGTH == 20 bytes of output, 
-                            and erases the SHA_CTX. Sourced from 
-                            <openssl/sha.h>.
+   -SHA1_Final(unsigned char *md, SHA_CTX *c): 
+        Places the message digest in md, which must have space for 20 bytes of 
+        output, and erases the `c` SHA_CTX structure. Sourced from 
+        <openssl/sha.h>.
 
    -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
@@ -802,10 +799,9 @@ int read_cache(void)
          */
         if (size > sizeof(struct cache_header)) {
             /*
-             * Read the `.dircache/index` file's content into memory locaiton
-             * referenced by `map`. Think of this as just a way to read in the
-             * content stored in the cache into memory so that it can be
-             * accessed by this program. for more details on `mmap()` see:
+             * Map the contents of the `.dircache/index` cache file to memory 
+             * and return a pointer to that space. For more details on the
+             * `mmap()` function, see:
              *
              * http://pubs.opengroup.org/onlinepubs/009695399/functions/
              * mmap.html
@@ -841,8 +837,8 @@ int read_cache(void)
     if (-1 == (int)(long)map)
         return error("mmap failed");
     #else
-        if (map == (void *) NULL)
-            return error("MapViewOfFile failed");
+    if (map == (void *) NULL)
+        return error("MapViewOfFile failed");
     #endif
 
     /*
@@ -887,7 +883,8 @@ int read_cache(void)
 /*
  * The code after the 'unmap' label is only executed if the cache header is 
  * invalid. In that case, the memory location into which the cache contents
- * were mapped is unmapped to prevent memory leaks.
+ * were mapped is unmapped to prevent memory leaks. Display an error message
+ * and return -1.
  */
 unmap:
     #ifndef BGIT_WINDOWS
