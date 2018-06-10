@@ -69,9 +69,6 @@
  * just a cache, after all.
  */
 
-/* This `CACHE_SIGNATURE` is hardcoded to be loaded into all cache_headers. */
-#define CACHE_SIGNATURE 0x44495243   /* Linus Torvalds: "DIRC" */
-
 #ifdef BGIT_UNIX
     #define STAT_TIME_SEC( st, st_xtim ) ( (st)->st_xtim ## e )
     #define STAT_TIME_NSEC( st, st_xtim ) ( (st)->st_xtim.tv_nsec )
@@ -91,6 +88,9 @@
     #define OPEN_FILE( fname, flags, mode ) open( fname, flags | O_BINARY, \
                                                       mode );
 #endif
+
+/* This `CACHE_SIGNATURE` is hardcoded to be loaded into all cache headers. */
+#define CACHE_SIGNATURE 0x44495243   /* Linus Torvalds: "DIRC" */
 
 /* Template of the header structure that identifes a set of cache entries. */
 struct cache_header {
@@ -138,7 +138,7 @@ struct cache_entry {
     unsigned int st_uid;      /* The user ID of the file’s owner. */
     unsigned int st_gid;      /* The group ID of the file. */
     unsigned int st_size;     /* The size of a regular file in bytes. */
-    unsigned char sha1[20];   /* The SHA1 hash of file's deflated content. */
+    unsigned char sha1[20];   /* The SHA1 hash of deflated blob object. */
     unsigned short namelen;   /* The filename or path length. */
     unsigned char name[0];    /* The filename or path. */
 };
