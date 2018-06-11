@@ -568,7 +568,7 @@ int write_sha1_file(char *buf, unsigned len)
     char *compressed;         /* Used to store compressed output. */
     z_stream stream;          /* Declare zlib stream. */
     unsigned char sha1[20];   /* Array to store SHA1 hash. */
-    SHA_CTX c;                /* Declare SHA context. */
+    SHA_CTX c;                /* Declare an SHA context structure. */
 
     /* Initialize the zlib stream to contain null characters. */
     memset(&stream, 0, sizeof(stream));
@@ -583,11 +583,11 @@ int write_sha1_file(char *buf, unsigned len)
     /* Allocate `size` bytes of space to store the next compressed output. */
     compressed = malloc(size); 
 
-    /* Set buf as the location of the next input to the compression stream. */
+    /* Specify buf as location of the next input to the compression stream. */
     stream.next_in = buf; 
     /* Number of bytes available as input for next compression. */
     stream.avail_in = len; 
-    /* Set compressed as the location to write the next compressed output. */
+    /* Specify compressed as location to write the next compressed output. */
     stream.next_out = compressed; 
     /* Number of bytes available for storing the next compressed output. */
     stream.avail_out = size; 
@@ -597,26 +597,26 @@ int write_sha1_file(char *buf, unsigned len)
     /* Linus Torvalds: nothing */;
 
     /*
-     * Free memory structures that were dynamically allocated for 
+     * Free memory structures that were dynamically allocated for the
      * compression. 
      */
     deflateEnd(&stream); 
     /* Get size of total compressed output. */
     size = stream.total_out; 
 
-    /* Initialize the SHA context. */
+    /* Initialize the SHA context structure. */
     SHA1_Init(&c); 
     /* Calculate hash of the compressed output. */
     SHA1_Update(&c, compressed, size); 
-    /* Store the SHA1 hash of the compressed output in `sha1`.  */
+    /* Store the SHA1 hash of the compressed output in `sha1`. */
     SHA1_Final(sha1, &c); 
 
     /* Write the compressed object to the object store. */
     if (write_sha1_buffer(sha1, compressed, size) < 0)
         return -1;
     /*
-     * Print the 40-character hexadecimal representation of the object's SHA1
-     * hash value.
+     * Display the 40-character hexadecimal representation of the object's 
+     * SHA1 hash value.
      */
     printf("%s\n", sha1_to_hex(sha1));
     return 0;
@@ -830,8 +830,8 @@ int read_cache(void)
     close(fd);
 
     /*
-     * Return an error in the event `mmap()` fails to map the file to 
-     * memory. 
+     * Display an error message and return -1 if `mmap()` failed to map the 
+     * file to memory. 
      */
     #ifndef BGIT_WINDOWS
     if (-1 == (int)(long)map)
