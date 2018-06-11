@@ -564,8 +564,8 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
  */
 int write_sha1_file(char *buf, unsigned len)
 {
-    int size;
-    char *compressed;
+    int size;                 /* Total size of compressed output. */
+    char *compressed;         /* Used to store compressed output. */
     z_stream stream;          /* Declare zlib stream. */
     unsigned char sha1[20];   /* Array to store SHA1 hash. */
     SHA_CTX c;                /* Declare SHA context. */
@@ -863,13 +863,15 @@ int read_cache(void)
      */
     active_cache = calloc(active_alloc, sizeof(struct cache_entry *));
 
-    /* This `offset` is used to skip past the header portion of the cache. */
+    /*
+     * `offset` is an index to the next byte of `map` to read. In this case,
+     * set it to the beginning of the first cache entry after the header. 
+     */
     offset = sizeof(*hdr); 
 
     /*
-     * Iterate over the cache entries, each time increasing the offset by the 
-     * size of the current cache entry. Add each cache entry into the 
-     * `active_cache` array.
+     * Add each cache entry into the `active_cache` array and increase the 
+     * `offset` index by the size of the current cache entry..
      */
     for (i = 0; i < hdr->entries; i++) {
         struct cache_entry *ce = map + offset;
@@ -881,9 +883,9 @@ int read_cache(void)
     return active_nr;
 
 /*
- * The code after the 'unmap' label is only executed if the cache header is 
- * invalid. In that case, the memory location into which the cache contents
- * were mapped is unmapped to prevent memory leaks. Display an error message
+ * The lines of code after the 'unmap' label are only executed if the cache 
+ * header is invalid. In that case, the mapping between the cache file and 
+ * memory is removed to prevent memory leaks. Then display an error message 
  * and return -1.
  */
 unmap:
