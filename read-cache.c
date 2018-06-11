@@ -440,14 +440,14 @@ char *sha1_file_name(unsigned char *sha1)
  */
 void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 {
-    z_stream stream;     /* Declare zlib stream. */
+    z_stream stream;     /* Declare a zlib z_stream structure. */
     char buffer[8192];   /* Buffer for zlib inflated output. */
     struct stat st;      /* `stat` structure for storing file information. */
     int i;               /* Not used. Even almighty Linux makes mistakes. */
     int fd;              /* File descriptor to be associated with the */
                          /* object to be read. */
-    int ret;
-    int bytes;
+    int ret;             /* Return value of inflate command. */
+    int bytes;           /* Used to track sizes of buffer content. */
     /*
      * `map` is a pointer to an object's mapped contents. `buf` is a pointer
      * to inflated object data.
@@ -528,7 +528,7 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
      * of the prepended metadata plus the terminating null character.
      */
     bytes = strlen(buffer) + 1; 
-    /* Allocate space to `buf` equal to the object data size. */
+    /* Allocate space to `buf` that's equal to the object data size. */
     buf = malloc(*size); 
     /* Error if space could not be allocated. */
     if (!buf)
@@ -536,10 +536,10 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
 
     /*
      * Copy the inflated object data from buffer to buf, i.e, without the 
-     * prepended metadata (object type and object data size).
+     * prepended metadata (the object type and expected object data size).
      */
     memcpy(buf, buffer + bytes, stream.total_out - bytes);
-    /* The size of the inflated object data without the prepended metadata. */
+    /* The size of the inflated data without the prepended metadata. */
     bytes = stream.total_out - bytes;
     /* Continue inflation if not all data has been inflated. */
     if (bytes < *size && ret == Z_OK) {
@@ -548,7 +548,7 @@ void *read_sha1_file(unsigned char *sha1, char *type, unsigned long *size)
         while (inflate(&stream, Z_FINISH) == Z_OK)
             /* Linus Torvalds: nothing */;
     }
-    /* Free all dynamically allocated data structures for the zlib stream. */
+    /* Free memory structures that were used for the inflation. */
     inflateEnd(&stream);
     return buf;   /* Return the inflated object data. */
 }
@@ -566,7 +566,7 @@ int write_sha1_file(char *buf, unsigned len)
 {
     int size;                 /* Total size of compressed output. */
     char *compressed;         /* Used to store compressed output. */
-    z_stream stream;          /* Declare zlib stream. */
+    z_stream stream;          /* Declare zlib z_stream structure. */
     unsigned char sha1[20];   /* Array to store SHA1 hash. */
     SHA_CTX c;                /* Declare an SHA context structure. */
 
@@ -636,7 +636,7 @@ int write_sha1_buffer(unsigned char *sha1, void *buf, unsigned int size)
 {
     /*
      * Build the path of the object in the object database using the object's 
-     * SHA1 hash value.
+     * SHA1 hash.
      */
     char *filename = sha1_file_name(sha1);
     int i;    /* Unused variable. Even Linus Torvalds makes mistakes. */
