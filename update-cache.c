@@ -471,7 +471,10 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
      */
     SHA1_Final(ce->sha1, &c);
 
-    /* Write the blob object to the object store. */
+    /*
+     * Write the blob object to the object store and return with the return
+     * value of the write_sha1_buffer function. 
+     */
     return write_sha1_buffer(ce->sha1, out, stream.total_out); 
 }
 
@@ -588,17 +591,14 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
 
     /* Initialize the SHA context `c`. */
     SHA1_Init(&c); 
-
     /* Calculate the hash of the cache header. */
     SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
-
     /* Calculate the hash of each cache entry. */
     for (i = 0; i < entries; i++) {
         struct cache_entry *ce = cache[i];
         int size = ce_size(ce);
         SHA1_Update(&c, ce, size);
     }
-
     /* Store the final SHA1 hash in the header. */
     SHA1_Final(hdr.sha1, &c);
 
@@ -618,12 +618,11 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
 
 /*
  * Linus Torvalds: We fundamentally don't like some paths: we don't want
- * dot or dot-dot anywhere, and in fact, we don't even want 
- * any other dot-files (.dircache or anything else). They
- * are hidden, for chist sake.
+ * dot or dot-dot anywhere, and in fact, we don't even want any other 
+ * dot-files (.dircache or anything else). They are hidden, for chist sake.
  *
- * Linus Torvalds: Also, we don't want double slashes or slashes at the
- * end that can make pathnames ambiguous. 
+ * Linus Torvalds: Also, we don't want double slashes or slashes at the end 
+ * that can make pathnames ambiguous. 
  */
 static int verify_path(char *path)
 {
@@ -679,9 +678,10 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Open a file descriptor that references the `.dircache/index.lock` file.
-     * which should not exist. Display an error message if the open() command 
-     * returns a value < 0, indicating failure, then return -1.
+     * Create and open a new cache lock file called `.dircache/index.lock` and 
+     * return a file descriptor to reference it. Display an error message if 
+     * the open() command returns a value < 0, indicating failure, then return 
+     * -1.
      */
     newfd = OPEN_FILE(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
     if (newfd < 0) {
@@ -693,15 +693,15 @@ int main(int argc, char **argv)
      * Loop over the files to add to the cache, whose paths or filenames were 
      * passed in as command line arguments:
      *
-     * ./update-cache filename1 filename2 ...
+     * ./update-cache path1 path2...
      */
     for (i = 1 ; i < argc; i++) {
         /* Store the ith path that was passed as a command line argument. */
         char *path = argv[i];
 
         /*
-         * Verify each path/filename that was passed in. If the path is
-         * invalid, continue to the next file.
+         * Verify the path. If the path is not valid, continue to the next 
+         * file. 
          */
         if (!verify_path(path)) {
             fprintf(stderr, "Ignoring path %s\n", argv[i]);
@@ -709,17 +709,16 @@ int main(int argc, char **argv)
         }
 
         /*
-         * This calls `add_file_to_cache()` which does a few things:
+         * This calls `add_file_to_cache()`, which does a few things:
          *      1) Opens the file at `path`.
          *      2) Gets information about the file and stores the file
          *         metadata in a cache_entry structure.
-         *      3) Calls the index_fd() function to deflate and calculate the
-         *         SHA1 hash of the data, 
-         *         and then to write the blob object to the object database.
+         *      3) Calls the index_fd() function to construct a corresponding
+         *         blob object and write it to the object database.
          *      4) Calls the add_cache_entry() function to insert the cache
          *         entry into the active_cache array lexicographically.
          *
-         * If any of these steps leads to a non-zero return code (i.e. fails), 
+         * If any of these steps leads to a nonzero return code (i.e. fails), 
          * jump to the `out` label below.
          */
         if (add_file_to_cache(path)) {
@@ -731,8 +730,8 @@ int main(int argc, char **argv)
     /*
      * This does a few things as well:
      *      1) Calls `write_cache()` to set up a cache header, calculate the
-     *         hash of the header and the cache entries, and then write 
-     *         everything to the index lock file.
+     *         SHA1 hash of the header and the cache entries, and then write 
+     *         the entire cache to the index lock file.
      *      2) Renames the `.dircache/index.lock` file to `.dircache/index`.
      */
     if (!write_cache(newfd, active_cache, active_nr)) {
