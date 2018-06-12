@@ -54,9 +54,8 @@
 
    -active_cache: Array representing the active cache/index.
 
-   -memmove(str1, str2, n): The memmove() function shall copy n bytes from
-                            the object pointed to by str2 into the object
-                            pointed to by str1.
+   -memmove(str1, str2, n): Copy n bytes from the object pointed to by str2 
+                            to the object pointed to by str1.
 
    -sizeof(datatype): Operator that gives the number of bytes needed to store 
                       a datatype or variable. 
@@ -68,11 +67,10 @@
                   specified by `size` and whose value is unspecified. Sourced 
                   from <stdlib.h>.
 
-   -mmap(addr, len, prot, flags,
-         file_descriptor, offset): Establish a mapping between a process'
-                                   address space and a file, shared memory
-                                   object, or typed memory object. Sourced
-                                   from <sys/mman.h>.
+   -mmap(addr, len, prot, flags, file_descriptor, offset): 
+        Establish a mapping between a process' address space and a file, 
+        shared memory object, or typed memory object. Sourced from 
+        <sys/mman.h>.
 
    -PROT_READ: Flag for the mmap() function's `prot` parameter describing
                the desired memory protection of the mapping. `PROT_READ`
@@ -128,16 +126,14 @@
    -SHA1_Init(SHA_CTX *c): Initializes a SHA_CTX structure. Sourced from 
                            <openssl/sha.h>. 
 
-   -SHA1_Update(SHA_CTX *c, const void *data, 
-                size_t len): Can be called repeatedly to calculate the hash
-                             value of chunks of data (len bytes from data). 
-                             Sourced from <openssl/sha.h>.
+   -SHA1_Update(SHA_CTX *c, const void *data, size_t len): 
+        Can be called repeatedly to calculate the hash value of chunks of data 
+        (len bytes from data). Sourced from <openssl/sha.h>.
 
-   -SHA1_Final(unsigned char *md, 
-               SHA_CTX *c): Places the message digest in md, which must have 
-                            space for SHA_DIGEST_LENGTH == 20 bytes of output, 
-                            and erases the SHA_CTX. Sourced from 
-                            <openssl/sha.h>.
+   -SHA1_Final(unsigned char *md, SHA_CTX *c): 
+        Places the message digest in md, which must have space for 20 bytes of 
+        output, and erases the `c` SHA_CTX structure. Sourced from 
+        <openssl/sha.h>.
 
    -stat: Structure pointer used by stat() function to store information
           related to a filesystem file. Sourced from <sys/stat.h>.
@@ -202,25 +198,27 @@
 
    The following variables and functions are defined in this source file.
 
-   -main(argc, argv): The main function which runs each time the ./cat-file 
-                      command is run.
+   -main(argc, argv): The main function which runs each time the
+                      update-cache command is run.
 
    -argc: The number of command line arguments supplied when executing 
-          ./cat-file.
+          update-cache.
 
    -argv: Array containing command line argument strings.
 
    -verify_path(): Checks if a file path is a valid path.
 
-   -add_file_to_cache(): Gets information about the file to cache, stores the 
-                         file metadata in a cache_entry structure, then calls 
-                         the `index_fd()` function to write the blob object to 
-                         the object store, and the `add_cache_entry()`
-                         function to insert the cache entry into the 
-                         `active_cache` array lexicographically.
+   -add_file_to_cache(): Get information about the file to add to the cache, 
+                         store the file metadata in a cache_entry structure, 
+                         then call the `index_fd()` function to construct a 
+                         blob object and write it to the object store, and the 
+                         `add_cache_entry()` function to insert the cache 
+                         entry into the `active_cache` array 
+                         lexicographically.
 
-   -index_fd(): Compresses file contents and metadata, calculates the hash 
-                value, and writes the blob object to the object database.
+   -index_fd(): Constructs a blob object, compresses it, calculates the SHA1 
+                hash of the compressed blob object, then write the blob object 
+                to the object database.
 
    -add_cache_entry(): Inserts a cache entry into the active_cache array
                        lexicographically.
@@ -330,7 +328,7 @@ static int remove_file_from_cache(char *path)
  * Parameters:
  *      -ce: The cache entry to be added to the `active_cache` array.
  * Purpose: Insert a cache entry into the `active_cache` array
- *          lexicographically..
+ *          lexicographically.
  */
 static int add_cache_entry(struct cache_entry *ce)
 {
@@ -375,22 +373,20 @@ static int add_cache_entry(struct cache_entry *ce)
  *      -ce: The cache entry structure corresponding to the file.
  *      -fd: The file descriptor associated with the file to be added.
  *      -st: The `stat` object containing info about the file to be added.
- * Purpose: Compress a file's contents and metadata, calculate the hash, and 
- *          write the blob object to the the object database.
+ * Purpose: Construct a blob object, compress it, calculate the SHA1 hash of
+ *          the compressed blob object, then write the blob object to the 
+ *          object database.
  */ 
 static int index_fd(const char *path, int namelen, struct cache_entry *ce, 
                     int fd, struct stat *st)
 {
-    /* Declare zlib stream. */
+    /* Declare zlib z_stream structure. */
     z_stream stream;
-
     /* Number of bytes to allocate for next compressed output. */
     int max_out_bytes = namelen + st->st_size + 200; 
-
     /* Allocate `max_out_bytes` of space to store next compressed output. */
     void *out = malloc(max_out_bytes);
-
-    /* Allocate space for file metadata. */
+    /* Allocate space to store file metadata. */
     void *metadata = malloc(namelen + 200);
 
     /* Map contents of file to be cached to memory. */
@@ -406,14 +402,14 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
     CloseHandle( fhandle );
     #endif
 
-    /* Declare a SHA context variable. */
+    /* Declare an SHA context structure. */
     SHA_CTX c;
 
     /* Release the file descriptor `fd` since we no longer need it. */
     close(fd);
 
     #ifndef BGIT_WINDOWS
-    /* Return -1 (failure) if `out` or `in` setup failed. */
+    /* Return -1 if memory allocation for the `out` or `in` memory failed. */
     if (!out || (int)(long)in == -1)
         return -1;
     #else
@@ -425,7 +421,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
     memset(&stream, 0, sizeof(stream));
 
     /*
-     * Initialize compression stream for optimized compression 
+     * Initialize the compression stream for optimized compression 
      * (as opposed to speed). 
      */
     deflateInit(&stream, Z_BEST_COMPRESSION);
@@ -434,16 +430,16 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
      * Linus Torvalds: ASCII size + nul byte
      */    
     stream.next_in = metadata;   /* Set file metadata as the first addition */
-                                 /* to the input compression stream. */
+                                 /* to the compression stream input. */
     /*
-     * Write `blob ` to the `metadata` string, followed by the size of the 
+     * Write `blob ` to the `metadata` array, followed by the size of the 
      * file being added to the cache.  Set the number of bytes available as
-     * input for next compression to the number of characters written + 1 (for 
-     * the terminating null character).
+     * input for the next compression equal to the number of characters 
+     * written + 1 (for the terminating null character).
      */
     stream.avail_in = 1 + sprintf(metadata, "blob %lu", 
                                   (unsigned long) st->st_size);
-    /* Set `out` as the location to write the next compressed output. */
+    /* Specify `out` as the location to write the next compressed output. */
     stream.next_out = out;
     /* Number of bytes available for storing the next compressed output. */
     stream.avail_out = max_out_bytes;
@@ -452,7 +448,7 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
     while (deflate(&stream, 0) == Z_OK)
         /* Linus Torvalds: nothing */;
 
-    /* Add the file content to the input compression stream. */
+    /* Add the file content to the compression stream input. */
     stream.next_in = in;
     stream.avail_in = st->st_size;
 
@@ -460,12 +456,9 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
     while (deflate(&stream, Z_FINISH) == Z_OK)
         /* Linus Torvalds: nothing */;
 
-    /*
-     * Free memory structures that were dynamically allocated for 
-     * compression. 
-     */
+    /* Free data structures that were used for compression. */
     deflateEnd(&stream);
-    /* Initialize the SHA context `c`. */
+    /* Initialize the `c` SHA context structure. */
     SHA1_Init(&c);
     /*
      * Calculate the hash of the compressed output, which has total size 
@@ -486,29 +479,32 @@ static int index_fd(const char *path, int namelen, struct cache_entry *ce,
  * Function: `add_file_to_cache`
  * Parameters:
  *      -path: The path of the file to add to the object store and index.
- * Purpose: Get information about the file to cache, store the file metadata
- *          in a cache_entry structure, then call the `index_fd()` function 
- *          to write the blob object to the object store, and the 
- *          `add_cache_entry()` function to insert the cache entry into the
- *          `active_cache` array lexicographically.
+ * Purpose: Get information about the file to add to the cache, store the file 
+ *          metadata in a cache_entry structure, then call the `index_fd()` 
+ *          function to construct a blob object and write it to the object 
+ *          store, and the `add_cache_entry()` function to insert the cache 
+ *          entry into the `active_cache` array lexicographically.
  */
 static int add_file_to_cache(char *path)
 {
     int size, namelen;
     /* Used to reference a cache entry. */
     struct cache_entry *ce; 
-    /* Used to store file information from `fstat()` function call. */
+    /*
+     * Used to store file information obtained through an `fstat()` function 
+     * call. 
+     */
     struct stat st;
-    /* Reference to a file descriptor representing a link to a file. */
+    /* File descriptor for the file to add to the cache. */
     int fd;
 
-    /* Associate the file descriptor with the file to add to the cache. */
+    /* Associate the file to add to the cache and return a file descriptor. */
     fd = open(path, O_RDONLY); 
 
     /*
-     * If file association fails, return -1, removing the associated cache
-     * entry from the active_cache array if the file does not exist in the 
-     * working directory.
+     * If the `open()` command fails, return -1. Remove the corresponding 
+     * cache entry from the active_cache array if the file does not exist in 
+     * the working directory.
      */
     if (fd < 0) {
         if (errno == ENOENT)
@@ -525,11 +521,11 @@ static int add_file_to_cache(char *path)
         return -1;
     }
 
-    /* The length of the path/filename string. */
+    /* Get the length of the file path string. */
     namelen = strlen(path); 
-    /* The size to allocate to the cache entry in bytes. */
+    /* Calculate the size to allocate to the cache entry in bytes. */
     size = cache_entry_size(namelen); 
-    /* Allocate memory of size `size` for the cache_entry. */
+    /* Allocate `size` bytes to the cache entry. */
     ce = malloc(size); 
     /* Initialize the cache entry to contain null characters. */
     memset(ce, 0, size); 
@@ -537,8 +533,8 @@ static int add_file_to_cache(char *path)
     memcpy(ce->name, path, namelen); 
 
     /*
-     * Copy the file information obtained from the fstat() call to the cache 
-     * entry's members. 
+     * Copy the file metadata obtained through the fstat() call to the cache
+     * entry structure members. 
      */
     ce->ctime.sec = STAT_TIME_SEC( &st, st_ctim );
     ce->ctime.nsec = STAT_TIME_NSEC( &st, st_ctim );
@@ -553,15 +549,16 @@ static int add_file_to_cache(char *path)
     ce->namelen = namelen;
 
     /*
-     * Use the index_fd() function to compress the file content, hash it, and 
-     * write a new file to the object store to represent that content.
+     * Call the index_fd() function to construct a blob object, compress it, 
+     * calculate the SHA1 hash of the compressed blob object, then write the 
+     * blob object to the object database.
      */
     if (index_fd(path, namelen, ce, fd, &st) < 0)
         return -1;
 
     /*
      * Insert the cache entry into the active_cache array lexicographically
-     * and then return.
+     * and then return using the return value of `add_cache_entry`.
      */
     return add_cache_entry(ce);
 }
@@ -671,9 +668,9 @@ int main(int argc, char **argv)
 
     /*
      * Read in the contents of the `.dircache/index` file into the 
-     * `active_cache` array. The number of cache entries will be stored in 
-     * `entries`. Throw an error if the number of entries is < 0, indicating
-     * an error in reading the cache.
+     * `active_cache` array and return the number of cache entries. Display an
+     * error message if the number of entries is < 0, indicating
+     * an error in reading the cache, then return -1.
      */
     entries = read_cache();
     if (entries < 0) {
@@ -683,8 +680,8 @@ int main(int argc, char **argv)
 
     /*
      * Open a file descriptor that references the `.dircache/index.lock` file.
-     * which should not exist. Throw an error if the open() command returns a
-     * value < 0, indicating failure.
+     * which should not exist. Display an error message if the open() command 
+     * returns a value < 0, indicating failure, then return -1.
      */
     newfd = OPEN_FILE(cache_lock_file, O_RDWR | O_CREAT | O_EXCL, 0600);
     if (newfd < 0) {
@@ -693,18 +690,18 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Iterate over the filenames to add to the cache, which were passed in as
-     * command line arguments, like:
+     * Loop over the files to add to the cache, whose paths or filenames were 
+     * passed in as command line arguments:
      *
      * ./update-cache filename1 filename2 ...
      */
     for (i = 1 ; i < argc; i++) {
-        /* Store the ith filename passed in as a command line argument. */
+        /* Store the ith path that was passed as a command line argument. */
         char *path = argv[i];
 
         /*
-         * Verify each path/filename that was passed in. Ignore the invalid 
-         * ones. 
+         * Verify each path/filename that was passed in. If the path is
+         * invalid, continue to the next file.
          */
         if (!verify_path(path)) {
             fprintf(stderr, "Ignoring path %s\n", argv[i]);
@@ -712,17 +709,18 @@ int main(int argc, char **argv)
         }
 
         /*
-         * This calls `add_file_to_cache()` which does a bunch of stuff:
+         * This calls `add_file_to_cache()` which does a few things:
          *      1) Opens the file at `path`.
          *      2) Gets information about the file and stores the file
-         *         metadata in a cache entry structure.
-         *      3) Calls the index_fd() function to deflate and hash data, and
-         *         then to write the blob object to the object database.
+         *         metadata in a cache_entry structure.
+         *      3) Calls the index_fd() function to deflate and calculate the
+         *         SHA1 hash of the data, 
+         *         and then to write the blob object to the object database.
          *      4) Calls the add_cache_entry() function to insert the cache
          *         entry into the active_cache array lexicographically.
          *
          * If any of these steps leads to a non-zero return code (i.e. fails), 
-         * jump to the `out` section below.
+         * jump to the `out` label below.
          */
         if (add_file_to_cache(path)) {
             fprintf(stderr, "Unable to add %s to database\n", path);
@@ -732,8 +730,8 @@ int main(int argc, char **argv)
 
     /*
      * This does a few things as well:
-     *      1) Calls the `write_cache()` to set up a cache header, calculate
-     *         the hash of the header and the cache entries, and then write 
+     *      1) Calls `write_cache()` to set up a cache header, calculate the
+     *         hash of the header and the cache entries, and then write 
      *         everything to the index lock file.
      *      2) Renames the `.dircache/index.lock` file to `.dircache/index`.
      */

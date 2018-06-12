@@ -103,11 +103,11 @@
 
    The following variables and functions are defined in this source file:
 
-   -main(argc, argv): The main function which runs each time the ./init-db 
+   -main(argc, argv): The main function which runs each time the init-db 
                       command is run.
 
    -argc: The number of command line arguments supplied when executing 
-          ./init-db.
+          init-db.
 
    -argv: Array containing command line argument strings.
 
