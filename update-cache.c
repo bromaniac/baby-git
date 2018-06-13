@@ -739,7 +739,7 @@ int main(int argc, char **argv)
      *      2) Renames the `.dircache/index.lock` file to `.dircache/index`.
      */
     if (!write_cache(newfd, active_cache, active_nr)) {
-        close( newfd );
+        close(newfd);
         if (RENAME(cache_lock_file, cache_file) != RENAME_FAIL) {
             return 0;
         }
@@ -747,7 +747,7 @@ int main(int argc, char **argv)
 
 /* Unlink the `.dircache/index.lock` file. */
 out:
-    close( newfd );
+    close(newfd);
     #ifndef BGIT_WINDOWS
     unlink(cache_lock_file);
     #else
