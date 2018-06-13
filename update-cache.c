@@ -232,8 +232,9 @@
    -remove_file_from_cache(): Removes a file's cache entry from the
                               active_cache array.
 
-   -write_cache(): Writes the cache header and the cache entries to the
-                   .dircache/index.lock file.
+   -write_cache(): Constructs the cache header, deflates the cache header and 
+                   the cache entries in the `active_cache` array, and then 
+                   writes them to the `.dircache/index.lock` file.
 */
 
 #ifndef BGIT_WINDOWS
@@ -333,11 +334,10 @@ static int remove_file_from_cache(char *path)
 static int add_cache_entry(struct cache_entry *ce)
 {
     /*
-     * The index where the cache entry will be inserted in the active_cache
-     * array. 
+     * Get the index where the cache entry will be inserted in the 
+     * active_cache array. 
      */
     int pos;   
-
     pos = cache_name_pos(ce->name, ce->namelen);
 
     /* Linus Torvalds: existing match? Just replace it */
@@ -570,30 +570,34 @@ static int add_file_to_cache(char *path)
  * Function: `write_cache`
  * Parameters:
  *      -newfd: File descriptor associated with the index lock file.
- *      -cache: The array of cache entries to write to the file identified by 
- *              `newfd`.
- *      -entries: The number of entries in the `cache` array.
- * Purpose: Write the cache header and the cache entries to the
- *          .dircache/index.lock file.
+ *      -cache: The array of pointers to cache entry structures to write to 
+ *              the index lock file.
+ *      -entries: The number of cache entries in the `active_cache` array.
+ * Purpose: Construct the cache header, deflate the cache header and the cache
+ *          entries in the `active_cache` array, and then write them to the 
+ *          `.dircache/index.lock` file.
  */
 static int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
-    SHA_CTX c;                 /* Declare a SHA context. */
-    struct cache_header hdr;   /* Declare a cache header structure. */
+    SHA_CTX c;                 /* Declare an SHA context structure. */
+    struct cache_header hdr;   /* Declare a cache_header structure. */
     int i;                     /* For loop iterator. */
 
     /* Set this to the signature defined in "cache.h". */
     hdr.signature = CACHE_SIGNATURE; 
     /* The version is always set to 1 in this release. */
     hdr.version = 1; 
-    /* Store the number of active_cache entries in the cache header. */
+    /*
+     * Store the number of cache entries in the `active_cache` array in the 
+     * cache header. 
+     */
     hdr.entries = entries; 
 
-    /* Initialize the SHA context `c`. */
+    /* Initialize the `c` SHA context structure. */
     SHA1_Init(&c); 
-    /* Calculate the hash of the cache header. */
+    /* Calculate the SHA1 hash of the cache header. */
     SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
-    /* Calculate the hash of each cache entry. */
+    /* Calculate the SHA1 hash of each cache entry. */
     for (i = 0; i < entries; i++) {
         struct cache_entry *ce = cache[i];
         int size = ce_size(ce);
