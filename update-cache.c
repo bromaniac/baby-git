@@ -232,9 +232,9 @@
    -remove_file_from_cache(): Removes a file's cache entry from the
                               active_cache array.
 
-   -write_cache(): Constructs the cache header, deflates the cache header and 
-                   the cache entries in the `active_cache` array, and then 
-                   writes them to the `.dircache/index.lock` file.
+   -write_cache(): Constructs the cache header, calculates the SHA1 hash of 
+                   the cache, and then writes them to the 
+                   `.dircache/index.lock` file.
 */
 
 #ifndef BGIT_WINDOWS
@@ -573,9 +573,9 @@ static int add_file_to_cache(char *path)
  *      -cache: The array of pointers to cache entry structures to write to 
  *              the index lock file.
  *      -entries: The number of cache entries in the `active_cache` array.
- * Purpose: Construct the cache header, deflate the cache header and the cache
- *          entries in the `active_cache` array, and then write them to the 
- *          `.dircache/index.lock` file.
+ * Purpose: Construct the cache header, calculate the SHA1 hash of the cache 
+ *          header and the cache entries in the `active_cache` array, and 
+ *          then write them to the `.dircache/index.lock` file.
  */
 static int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
@@ -595,9 +595,9 @@ static int write_cache(int newfd, struct cache_entry **cache, int entries)
 
     /* Initialize the `c` SHA context structure. */
     SHA1_Init(&c); 
-    /* Calculate the SHA1 hash of the cache header. */
+    /* Update the running SHA1 hash calculation with the cache header. */
     SHA1_Update(&c, &hdr, offsetof(struct cache_header, sha1));
-    /* Calculate the SHA1 hash of each cache entry. */
+    /* Update the running SHA1 hash calculation with each cache entry. */
     for (i = 0; i < entries; i++) {
         struct cache_entry *ce = cache[i];
         int size = ce_size(ce);
