@@ -501,7 +501,7 @@ static int add_file_to_cache(char *path)
     /* File descriptor for the file to add to the cache. */
     int fd;
 
-    /* Associate the file to add to the cache and return a file descriptor. */
+    /* Open the file to add to the cache and return a file descriptor. */
     fd = open(path, O_RDONLY); 
 
     /*

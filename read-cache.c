@@ -230,7 +230,7 @@
    -write_sha1_buffer(): Write an object to the object database, using the
                          object's SHA1 hash value as index.
 
-   -error(): Print an error message to the standard error stream.
+   -error(): Print an error message to standard error stream and return -1.
 
    -verify_hdr(): Validate a cache header.
 
@@ -733,7 +733,7 @@ int read_cache(void)
 
     /*
      * Get the path to the object store by first checking if anything is 
-     * stored in the `DB_ENVIRONMENT` environment variable. If not use the 
+     * stored in the `DB_ENVIRONMENT` environment variable. If not, use the 
      * default path specified in `DEFAULT_DB_ENVIRONMENT`, which is 
      * `.dircache/objects`. Then check if the directory can be accessed.
      */
@@ -746,7 +746,7 @@ int read_cache(void)
 
     /*
      * Open the `.dircache/index` cache file and associate it with the `fd` 
-     * file * descriptor (just an integer).
+     * file descriptor (just an integer).
      */
     #ifndef BGIT_WINDOWS
     fd = open(".dircache/index", O_RDONLY );

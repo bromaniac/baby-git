@@ -90,8 +90,8 @@
    -check_valid_sha1(): Check if user-supplied SHA1 hash corresponds to an
                         object in the object database.
 
-   -prepend_integer(): Prepend the size of the tree data in bytes to the
-                       buffer.
+   -prpend_integer(): Prepend a string containing the decimal form of the size 
+                      of the tree data in bytes to the buffer.
 
    -ORIG_OFFSET: Token that defines the number of bytes at the beginning of 
                  the buffer that are allocated for the object tag and the 
@@ -103,7 +103,7 @@
  * Parameters:
  *      -sha1: An SHA1 hash to check.
  * Purpose: Check if user-supplied SHA1 hash corresponds to an object in the 
- *          object database.
+ *          object database and if the process has read access to it.
  */
 static int check_valid_sha1(unsigned char *sha1)
 {
@@ -114,7 +114,10 @@ static int check_valid_sha1(unsigned char *sha1)
     char *filename = sha1_file_name(sha1);
     int ret;   /* Return code. */
 
-    /* Check whether the object is accessible in the object database. */
+    /*
+     * Check whether the process has read access to the object in the object 
+     * database. 
+     */
     ret = access(filename, R_OK);
 
     /* Error if the file is not accessible. */
@@ -131,7 +134,8 @@ static int check_valid_sha1(unsigned char *sha1)
  *      -val: Size in bytes of the tree data.
  *      -i: Number of bytes at the beginning of `buffer` that are allocated 
  *          for the object tag and object data size.
- * Purpose: Prepend the size of the tree data in bytes to the buffer.
+ * Purpose: Prepend a string containing the decimal form of the size of the 
+ *          tree data in bytes to the buffer.
  */
 static int prepend_integer(char *buffer, unsigned val, int i)
 {
@@ -139,8 +143,8 @@ static int prepend_integer(char *buffer, unsigned val, int i)
     buffer[--i] = '\0';
 
     /*
-     * Prepend the decimal form of the size of the tree data in bytes before
-     * the null character.
+     * Prepend a string containing the decimal form of the size of the tree 
+     * data in bytes before the null character.
      */
     do {
         buffer[--i] = '0' + (val % 10);
@@ -170,7 +174,7 @@ int main(int argc, char **argv)
 {
     /* The size to be allocated to the buffer. */
     unsigned long size;
-    /* Index of the element of the buffer to be filled next. */
+    /* Index of the buffer element to be filled next. */
     unsigned long offset;
     /* Not used. Even Linus Torvalds makes mistakes. */
     unsigned long val;
@@ -187,8 +191,9 @@ int main(int argc, char **argv)
     char *buffer;
 
     /*
-     * If there are no active cache entries, throw an error message since 
-     * there is nothing staged in the index to write to a tree.
+     * If there are no active cache entries or if there was an error reading
+     * the cache, display an error message and exit since there is nothing to 
+     * write to a tree.
      */
     if (entries <= 0) {
         fprintf(stderr, "No file-cache to create a tree of\n");
@@ -201,19 +206,20 @@ int main(int argc, char **argv)
     buffer = malloc(size);
     /*
      * Set the offset index using the macro defined in this file. The tree
-     * data will be written starting at this offset. 
+     * data will be written starting at this offset.  The tree metadata will
+     * be written before it.
      */
     offset = ORIG_OFFSET;
 
     /*
-     * Iterate over each cache entry and build the tree object by adding the 
-     * relevant information to the buffer.
+     * Loop over each cache entry and build the tree object by adding the 
+     * data from the cache entry to the buffer.
      */
     for (i = 0; i < entries; i++) {
         /* Pick out the ith cache entry from the active_cache array. */
         struct cache_entry *ce = active_cache[i];
 
-        /* Make sure each cache entry has a valid SHA1. Otherwise, exit. */
+        /* Check if the cache entry's SHA1 hash is valid. Otherwise, exit. */
         if (check_valid_sha1(ce->sha1) < 0)
             exit(1);
 
@@ -245,11 +251,12 @@ int main(int argc, char **argv)
     }
 
     /*
-     * Prepend the size of the tree data in bytes to the buffer.
+     * Prepend a string containing the decimal form of the size of the tree 
+     * data in bytes to the buffer.
      */
     i = prepend_integer(buffer, offset - ORIG_OFFSET, ORIG_OFFSET);
     /*
-     * Prepend the text `tree ` to the buffer to identify this object as a 
+     * Prepend the string `tree ` to the buffer to identify this object as a 
      * tree in the object store.
      */
     i -= 5;
