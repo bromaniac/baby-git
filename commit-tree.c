@@ -105,8 +105,8 @@
                    about the user with user ID `uid`.
 
    -gethostname(name, namelen): Get the host name of the system on which the
-                                function it was called and store it in array 
-                                `name`, which has length `namelen`.
+                                function was called and store it in `name`,
+                                which has length `namelen`.
 
    -time(time_t *timep): Return the current calendar time in number of seconds
                          elapsed since 00:00:00 on January 1, 1970 UTC.
@@ -144,10 +144,10 @@
    -init_buffer(): Allocate space to and initialize the buffer that will
                    contain the commit data.
 
-   -add_buffer(): Adds one item of the commit data to the buffer.
+   -add_buffer(): Adds one item of commit data to the buffer.
 
-   -prepend_integer(): Prepend the size of the commit data in bytes to the
-                       buffer.
+   -prepend_integer(): Prepend a string containing the decimal form of the 
+                       size of the commit data in bytes to the buffer.
 
    -finish_buffer(): Call the prepend_integer() function to prepend the size 
                      of the commit data to the buffer, and then prepend the
@@ -174,8 +174,8 @@
  */
 #include <time.h>
 
-/* 16384 bytes, the initial memory size to allocate to the buffer. */
-#define BLOCKING (1ul << 14) 
+/* 32768 bytes, the initial memory size to allocate to the buffer. */
+#define BLOCKING (1ul << 15) 
 /*
  * Defines the number of bytes at the beginning of the buffer that are 
  * allocated for the object tag and the object data size.
@@ -205,10 +205,10 @@ static void init_buffer(char **bufp, unsigned int *sizep)
 /*
  * Function: `add_buffer`
  * Parameters:
- *      -bufp: Pointer to a pointer to The commit object buffer.
+ *      -bufp: Pointer to a pointer to the commit object buffer.
  *      -sizep: Pointer to the size of the filled portion of the buffer.
- *      -fmt: Format string.
- * Purpose: Adds one item of the commit data to the buffer.
+ *      -fmt: Formatted string to be written to the buffer.
+ * Purpose: Adds one item of commit data to the buffer.
  */
 static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 {
@@ -222,14 +222,14 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
     va_start(args, fmt); 
 
     /*
-     * Use argument list args to construct the fmt string and write the string 
-     * to one_line. 
+     * Use variable argument list args to construct the fmt string and write 
+     * the string to one_line. 
      */
     len = vsnprintf(one_line, sizeof(one_line), fmt, args);
 
     /* Clean up args variable list object. */
     va_end(args); 
-    /* Size of current filled portion of commit object buffer. */
+    /* Size of currently filled portion of commit object buffer. */
     size = *sizep; 
     /* Add length of one_line to the size of the filled buffer portion. */
     newsize = size + len; 
@@ -239,7 +239,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
     buf = *bufp; 
 
     /* 
-     * Increase the buffer size if the calculated size of filled portion of 
+     * Increase the buffer size if the expected size of the filled portion of 
      * the buffer is greater than the calculated minimum buffer size. 
      */
     if (newsize > alloc) {
@@ -269,7 +269,8 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
  *      -val: Size in bytes of the commit data.
  *      -i: Number of bytes at the beginning of `buffer` that are allocated 
  *          for the object tag and object data size.
- * Purpose: Prepend the size of the commit data in bytes to the buffer.
+ * Purpose: Prepend a string containing the decimal form of the size of the 
+ *          commit data in bytes to the buffer.
  */
 static int prepend_integer(char *buffer, unsigned val, int i)
 {
@@ -277,8 +278,8 @@ static int prepend_integer(char *buffer, unsigned val, int i)
     buffer[--i] = '\0'; 
 
     /*
-     * Prepend the decimal form of the size of the commit data in bytes before
-     * the null character.
+     * Prepend a string containing the decimal form of the size of the commit 
+     * data in bytes before the null character.
      */
     do {
         buffer[--i] = '0' + (val % 10);
@@ -424,7 +425,7 @@ int main(int argc, char **argv)
 
     /*
      * Used to store the commit time in number of seconds elapsed since 
-     * elapsed since 00:00:00 on January 1, 1970 UTC.
+     * 00:00:00 on January 1, 1970 UTC.
      */
     time_t now; 
     char *buffer;        /* The commit object buffer. */
@@ -432,16 +433,17 @@ int main(int argc, char **argv)
 
     /*
      * Show usage message if there are less than 2 command line arguments or 
-     * if an object corresponding to the given tree SHA1 hash does not exist
-     * in the object store. Then exit.
+     * if the tree hash given in the command line is not a valid 40-character
+     * representation of an SHA1 hash value. Then exit.
      */
     if (argc < 2 || get_sha1_hex(argv[1], tree_sha1) < 0)
         usage("commit-tree <sha1> [-p <sha1>]* < changelog");
 
     /*
-     * Loop through the parent commit SHA1 hashes in the command line
-     * arguments. Show usage message if the corresponding object does not
-     * exist in the object store, then exit. Otherwise, increment the parent 
+     * Loop through the parent commit hashes given in the command line
+     * arguments. Check that each hash is a valid 40-character representation
+     * of an SHA1 hash value. If not, or if the command line arguments are not
+     * given correctly, show usage and exit. Otherwise, increment the parent 
      * counter.
      */
     for (i = 2; i < argc; i += 2) {
@@ -496,7 +498,7 @@ int main(int argc, char **argv)
 
     /*
      * Get the current calendar time and convert it to a human-readable string
-     * of the corresponding local date and time. 
+     * containing the corresponding local date and time. 
      */
     time(&now);
     realdate = ctime(&now);
@@ -521,8 +523,8 @@ int main(int argc, char **argv)
     add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
 
     /*
-     * For each pareent commit SHA1 hash, add the static string 'parent' and 
-     * the hash to the buffer.
+     * For each pareent commit SHA1 hash, add the string 'parent ' and the
+     * hash to the buffer.
      *
      * Linus Torvalds: NOTE! This ordering means that the same exact tree 
      * merged with a * different order of parents will be a _different_ 
@@ -532,7 +534,10 @@ int main(int argc, char **argv)
         add_buffer(&buffer, &size, "parent %s\n", 
                    sha1_to_hex(parent_sha1[i]));
 
-    /* Add the author and committer email, and commit time to the buffer. */
+    /*
+     * Add the author and committer name, email, and commit time to the 
+     * buffer. 
+     */
     add_buffer(&buffer, &size, "author %s <%s> %s\n", gecos, email, date);
     add_buffer(&buffer, &size, "committer %s <%s> %s\n\n", 
                realgecos, realemail, realdate);
@@ -544,8 +549,9 @@ int main(int argc, char **argv)
         add_buffer(&buffer, &size, "%s", comment);
 
     /*
-     * Prepend the size of the commit data to the buffer, and then prepend the
-     * commit object tag to the buffer.
+     * Prepend the a string containing the decimal form of the size of the 
+     * commit data to the buffer, and then prepend the commit object tag to 
+     * the buffer.
      */
     finish_buffer("commit ", &buffer, &size);
 
