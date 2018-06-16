@@ -144,21 +144,21 @@
    -init_buffer(): Allocate space to and initialize the buffer that will
                    contain the commit data.
 
-   -add_buffer(): Adds one item of commit data to the buffer.
+   -add_buffer(): Adds one item of commit object data to the buffer.
 
    -prepend_integer(): Prepend a string containing the decimal form of the 
                        size of the commit data in bytes to the buffer.
 
    -finish_buffer(): Call the prepend_integer() function to prepend the size 
                      of the commit data to the buffer, and then prepend the
-                     object tag to the buffer.
+                     commit object tag to the buffer.
 
    -ORIG_OFFSET: Token that defines the number of bytes at the beginning of 
                  the buffer that are allocated for the object tag and the 
                  object data size.
 
    -BLOCKING: Token that defines the initial memory size to allocate to the 
-              buffer. Set to 16384 bytes.
+              buffer. Set to 32768 bytes.
 */
 
 #ifndef BGIT_WINDOWS
@@ -208,7 +208,7 @@ static void init_buffer(char **bufp, unsigned int *sizep)
  *      -bufp: Pointer to a pointer to the commit object buffer.
  *      -sizep: Pointer to the size of the filled portion of the buffer.
  *      -fmt: Formatted string to be written to the buffer.
- * Purpose: Adds one item of commit data to the buffer.
+ * Purpose: Adds one item of commit object data to the buffer.
  */
 static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 {
@@ -229,22 +229,25 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 
     /* Clean up args variable list object. */
     va_end(args); 
-    /* Size of currently filled portion of commit object buffer. */
+    /* Current size of filled portion of commit object buffer. */
     size = *sizep; 
     /* Add length of one_line to the size of the filled buffer portion. */
     newsize = size + len; 
-    /* Calculate minimum buffer size. Should be a multiple of 32768 bytes. */
+    /*
+     * Calculate the current maximum buffer size. Should be a multiple of 
+     * 32768 bytes. 
+     */
     alloc = (size + 32767) & ~32767; 
     /* Set local pointer to point to the commit object buffer. */
     buf = *bufp; 
 
     /* 
      * Increase the buffer size if the expected size of the filled portion of 
-     * the buffer is greater than the calculated minimum buffer size. 
+     * the buffer is greater than the calculated maximum buffer size. 
      */
     if (newsize > alloc) {
         /*
-         * Calculate minimum buffer size. Should be a multiple of 32768 
+         * Calculate new maximum buffer size. Should be a multiple of 32768 
          * bytes. 
          */
         alloc = (newsize + 32767) & ~32767; 
@@ -295,33 +298,33 @@ static int prepend_integer(char *buffer, unsigned val, int i)
 /*
  * Function: `finish_buffer`
  * Parameters:
- *      -tag: Object tag to prepend to the buffer.
+ *      -tag: String with object tag to prepend to the buffer.
  *      -bufp: Pointer to a pointer to the commit object buffer.
  *      -sizep: Pointer to the size of the filled portion of the buffer.
  * Purpose: Call the prepend_integer() function to prepend the size of the 
- *          commit data to the buffer, and then prepend the object tag to the 
- *          buffer.
+ *          commit object data to the buffer, and then prepend the commit 
+ *          object tag to the buffer.
  */
 static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
 {
-    /* The length of the object tag. */
+    /* The length of the string containing the object tag. */
     int taglen; 
     /* Index of the element of the buffer to be filled next. */
     int offset; 
     /* Set local pointer to point to the commit object buffer. */
     char *buf = *bufp; 
-    /* Size of current filled portion of commit object buffer. */
+    /* Current size of filled portion of commit object buffer. */
     unsigned int size = *sizep; 
 
-    /* Prepend the size of the tree data in bytes to the buffer. */
+    /* Prepend the size of the commit object data in bytes to the buffer. */
     offset = prepend_integer(buf, size - ORIG_OFFSET, ORIG_OFFSET);
-    /* Get the length of the object tag. */
+    /* Get the length of the string containing the object tag. */
     taglen = strlen(tag); 
-    /* Decrement offset by length of the object tag. */
+    /* Decrement offset index by length of the object tag string. */
     offset -= taglen; 
     /*
      * Point to the byte in the buffer where the first character of the object 
-     * tag will be written. 
+     * tag string will be written. 
      */
     buf += offset; 
     /*
@@ -329,7 +332,7 @@ static void finish_buffer(char *tag, char **bufp, unsigned int *sizep)
      * commit object. 
      */
     size -= offset; 
-    /* Prepend the commit object tag to the buffer. */
+    /* Prepend the string containing the commit object tag to the buffer. */
     memcpy(buf, tag, taglen); 
 
     /*
@@ -549,8 +552,8 @@ int main(int argc, char **argv)
         add_buffer(&buffer, &size, "%s", comment);
 
     /*
-     * Prepend the a string containing the decimal form of the size of the 
-     * commit data to the buffer, and then prepend the commit object tag to 
+     * Prepend a string containing the decimal form of the size of the commit
+     * object data to the buffer, and then prepend the commit object tag to 
      * the buffer.
      */
     finish_buffer("commit ", &buffer, &size);
