@@ -156,8 +156,8 @@ static int unpack(unsigned char *sha1)
          */
         buffer = sha1 + 20; 
         /*
-         * Decrement size by the length of the metadata that was read for the
-         * current blob object. 
+         * Decrement `size` by the length of the metadata that was read for 
+         * the current blob object. 
          */
         size -= len + 20; 
 
