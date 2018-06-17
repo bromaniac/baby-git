@@ -109,7 +109,7 @@ int main(int argc, char **argv)
     char type[20];
     /* Buffer to store the object data. */
     void *buf;
-    /* The size in byte of the object data. */
+    /* The size in bytes of the object data. */
     unsigned long size;
     /* A template string used to generate a unique output filename. */
     char template[] = "temp_git_file_XXXXXX";
@@ -126,15 +126,15 @@ int main(int argc, char **argv)
         usage("cat-file: cat-file <sha1>");
 
     /*
-     * Read an object with hash value `sha1` from the object store, inflate 
-     * it, and return a pointer to the object data (without the prepended 
-     * metadata). Store the object type and data size in `type` and `size` 
-     * respectively.
+     * Read the object whose SHA1 hash is `sha1` from the object store, 
+     * inflate it, and return a pointer to the object data (without the 
+     * prepended metadata). Store the object type and object data size in 
+     * `type` and `size` respectively.
      */
     buf = read_sha1_file(sha1, type, &size);
     
     /*
-     * Exit if `buf` is a null pointer, i.e., reading the object from the
+     * Exit if `buf` is a null pointer, i.e., if reading the object from the
      * object store failed.
      */
     if (!buf)
@@ -142,20 +142,20 @@ int main(int argc, char **argv)
 
     /*
      * Modify `template` to generate a unique filename, then open the file for 
-     * reading and writing and return a file descriptorfor the file. The 
+     * reading and writing and return a file descriptor for the file. The 
      * `XXXXXX` in the template is relaced with a randomly generated 
      * alphanumeric string to generate a unique filename.
      */
     fd = mkstemp(template);
 
-    /* If mkstemp() fails, print usage message and exit. */
+    /* If mkstemp() fails, print error message and exit. */
     if (fd < 0)
         usage("unable to create tempfile");
 
     /*
-     * Write the object data, which has length `size` bytes, to the output 
-     * associated with `fd`. If the number of bytes written does not equal the
-     * object data size, set object `type` to "bad".
+     * Write the object data, which has length `size` bytes, to the output
+     * file associated with `fd`. If the number of bytes written does not 
+     * equal the object data size, then set object `type` to "bad".
      */
     if (write(fd, buf, size) != size)
         strcpy(type, "bad");
