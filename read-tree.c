@@ -90,8 +90,8 @@
    -main(): The main function runs each time the ./read-tree command is run.
 
    -unpack(): Call the read_sha1_file() function to read and inflate a tree
-              object from the object store, and then write the tree data to
-              screen.
+              object from the object store, and then output the tree data to
+              the screen.
 */
 
 /*
@@ -99,20 +99,20 @@
  * Parameters:
  *        -sha1: The SHA1 hash of a tree object in the object store. 
  * Purpose: Call the read_sha1_file() function to read and inflate a tree
- *          object from the object store, and then write the tree data to
- *          screen.
+ *          object from the object store, and then output the tree data to
+ *          the screen.
  */
 static int unpack(unsigned char *sha1)
 {
     void *buffer;         /* The tree data buffer. */
-    unsigned long size;   /* The size of the tree data in bytes. */
+    unsigned long size;   /* The size of the tree object data in bytes. */
     char type[20];        /* The object type. */
 
     /*
      * Read an object with hash value `sha1` from the object store, inflate 
      * it, and return a pointer to the object data (without the prepended 
-     * metadata). Store the object type and data size in `type` and `size` 
-     * respectively.
+     * metadata). Store the object type and object data size in `type` and 
+     * `size` respectively.
      */
     buffer = read_sha1_file(sha1, type, &size);
 
@@ -128,34 +128,43 @@ static int unpack(unsigned char *sha1)
         usage("expected a 'tree' node");
 
     /*
-     * Read metadata about each blob object from the tree buffer. 
+     * Read metadata about each blob object from the tree object data buffer. 
      */
     while (size) {
-        /* Calculate offset to the current blob's SHA1 hash. */
+        /* Calculate offset to the current blob object's SHA1 hash. */
         int len = strlen(buffer) + 1;           
-        /* Point to the current blob's SHA1 hash. */
+        /* Point to the current blob object's SHA1 hash. */
         unsigned char *sha1 = buffer + len;  
-        /* Point to the path of the file corresponding to the current blob. */
+        /*
+         * Point to the path of the file corresponding to the current blob
+         * object. 
+         */
         char *path = strchr(buffer, ' ') + 1;   
         unsigned int mode; 
         
         /*
          * Verify the current size of the buffer and get the mode of the file
-         * corresponding to the current blob. If either fails, display usage 
-         * message then exit.
+         * corresponding to the current blob object. If either fails, display 
+         * error message then exit.
          */
         if (size < len + 20 || sscanf(buffer, "%o", &mode) != 1)
             usage("corrupt 'tree' file");
 
-        /* Adjust buffer to point to the start of the next blob's metadata. */
+        /*
+         * Adjust buffer to point to the start of the next blob object's 
+         * metadata. 
+         */
         buffer = sha1 + 20; 
-        /* Decrement size by the amount of metadata that was read. */
+        /*
+         * Decrement size by the length of the metadata that was read for the
+         * current blob object. 
+         */
         size -= len + 20; 
 
         /*
          * Display the mode and path of the file corresponding to the current
-         * blob object, and the blob's SHA1 hash in hexadicimal 
-         * representation.
+         * blob object, and the 40-character representation of the current 
+         * blob object's SHA1 hash.
          */
         printf("%o %s (%s)\n", mode, path, sha1_to_hex(sha1));
     }
@@ -183,8 +192,8 @@ int main(int argc, char **argv)
 
     /*  
      * Validate the number of command line arguments, which should be equal to
-     * 2 since the initial command itself is also counted. If not, print a 
-     * usage message and exit.
+     * 2 since the command itself is also counted. If not, print a usage 
+     * message and exit.
      */
     if (argc != 2)
         usage("read-tree <key>");
@@ -192,7 +201,7 @@ int main(int argc, char **argv)
     /* 
      * Convert the given 40-character hexadicimal representation of an SHA1 
      * hash value to the equivalent 20-byte representation. If conversion 
-     * fails (for example if the hexadecimal representation has a character 
+     * fails (for example, if the hexadecimal representation has a character 
      * outside the valid hexadecimal range of 0-9, a-f, or A-F), print usage 
      * message and exit.
      */
@@ -209,13 +218,17 @@ int main(int argc, char **argv)
     sha1_file_directory = getenv(DB_ENVIRONMENT);
 
     /*  
-     * If object store path was not set from environment variable above, set 
-     * it to the default value, `.dircache/objects`, from "cache.h".
+     * If object store path was not set from the environment variable above, 
+     * set it to the default value, `.dircache/objects`, the definition of the
+     * token `DEFAULT_DB_ENVIRONMENT` in "cache.h".
      */
     if (!sha1_file_directory)
         sha1_file_directory = DEFAULT_DB_ENVIRONMENT;
 
-    /* Call `unpack()` with the binary SHA1 hash of the tree. */
+    /*
+     * Call `unpack()` function with the binary SHA1 hash of the tree object
+     * as the function parameter. 
+     */
     if (unpack(sha1) < 0)
         usage("unpack failed");
 
