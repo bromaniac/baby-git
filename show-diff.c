@@ -43,12 +43,13 @@
    -snprintf(char *s, size_t n, const char *format, ...):
         Write the formatted string `format` into `s`, with `n` specifying the 
         maximum number of characters that should be written to `s`, including 
-       the null terminating character.
+        the null terminating character.
 
    -popen(command, mode): Create a pipe between the calling program and a 
                           shell command and return a pointer to a stream that 
-                          enables read or write acces to the command depending 
-                          on the value of mode. Sourced from <stdio.h>.
+                          enables read or write access to the command 
+                          depending on the value of mode. Sourced from 
+                          <stdio.h>.
 
    -fwrite(data, size, nitems, stream): Write up to `nitems`, each of size 
                                         `size`, from array `data` to `stream`.
@@ -56,8 +57,6 @@
 
    -pclose(stream): Close a stream that was opened by popen(). Sourced from 
                     <stdio.h>.
-
-                  the `active_cache`. The number of caches entries is returned.
 
    -read_cache(): Reads the contents of the `.dircache/index` file into the 
                   `active_cache` array. 
@@ -95,23 +94,30 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
      * Compare metadata stored in a cache entry to those of the corresponding
      * working file to check if they are the same.
      */
+
+    /* Check last modification time. */
     if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
         ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
             changed |= MTIME_CHANGED;
+    /* Check time of last status change. */
     if (ce->ctime.sec  != (unsigned int)STAT_TIME_SEC( st, st_ctim ) ||
         ce->ctime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_ctim ))
             changed |= CTIME_CHANGED;
 
+    /* Check file user ID and group ID. */
     if (ce->st_uid != (unsigned int)st->st_uid ||
         ce->st_gid != (unsigned int)st->st_gid)
         changed |= OWNER_CHANGED;
+    /* Check file mode. */
     if (ce->st_mode != (unsigned int)st->st_mode)
         changed |= MODE_CHANGED;
     #ifndef BGIT_WINDOWS
+    /* Check device ID and file inode number. */
     if (ce->st_dev != (unsigned int)st->st_dev ||
         ce->st_ino != (unsigned int)st->st_ino)
         changed |= INODE_CHANGED;
     #endif
+    /* Check file size. */
     if (ce->st_size != (unsigned int)st->st_size)
         changed |= DATA_CHANGED;
     return changed;
@@ -122,7 +128,7 @@ static int match_stat(struct cache_entry *ce, struct stat *st)
  * Parameters:
  *      -ce: Pointer to a cache entry structure.
  *      -cur: Pointer to a stat structure containing metadata of the working 
- *            file in that corresponds to the cache entry. 
+ *            file that corresponds to the cache entry. 
  *      -old_contents: The blob data corresponding to the cache entry.
  *      -old_size: The size of the blob data in bytes.
  * Purpose: Use the diff shell command to display the differences between the 
@@ -144,18 +150,19 @@ static void show_differences(struct cache_entry *ce, struct stat *cur,
     snprintf(cmd, sizeof(cmd), "diff --strip-trailing-cr -u - %s", ce->name);
 
     /*
-     * Create a pipe to the diff command and return a pointer to the stream
-     * for writing. 
+     * Create a pipe to the diff command and return a pointer to the
+     * corresponding stream for writing. 
      */
     f = popen(cmd, "w");
 
     /*
-     * Write the object data corresponding to the current cache entry to the
-     * command stream to complete the command.
+     * Write the blob object data corresponding to the current cache entry to 
+     * the command stream to complete the command, thus effectively executing 
+     * the diff command.
      */
     fwrite(old_contents, old_size, 1, f);
 
-    /* Close the stream. */
+    /* Close the command stream. */
     pclose(f);
 }
 
@@ -173,22 +180,24 @@ int main(int argc, char **argv)
 {
     /*
      * Reads the contents of the `.dircache/index` file into the 
-     * `active_cache` array and return the number of cache entries.
+     * `active_cache` array and returns the number of cache entries.
      */
     int entries = read_cache();
 
     /* For loop counter. */
     int i;
 
-    /* If there are no cache entries, display an error message and exit. */
+    /*
+     * If there was an error reading the cache, display an error message and 
+     * exit. 
+     */
     if (entries < 0) {
         perror("read_cache");
         exit(1);
     }
 
-    /* Loop through the cache entries in the active cache. */
+    /* Loop through the cache entries in the active_cache array. */
     for (i = 0; i < entries; i++) {
-
         /* Declare a stat structure to store file metadata. */
         struct stat st;
         /* The current cache entry. */
@@ -197,20 +206,20 @@ int main(int argc, char **argv)
         int n;
         /* Flag to indicate which file metadata changed, if any. */
         int changed;
-        /* Not used */
+        /* Not used. */
         unsigned int mode;
-        /* Object data size. */
+        /* Blob object data size. */
         unsigned long size;
-        /* Used to store the object type (blob, tree, or commit). */
+        /* Used to store the object type (blob in this case ). */
         char type[20];
-        /* Used to store the blob data. */
+        /* Used to store the blob object data. */
         void *new;
 
         /*
          * Use the stat() function to obtain information about the working 
          * file corresponding to the current cache entry and store it in the 
-         * `st` stat structure. If the stat() call fails, display an error and
-         * continue to the next cache entry.
+         * `st` stat structure. If the stat() call fails, display an error
+         * message and continue to the next cache entry.
          */
         if (stat(ce->name, &st) < 0) {
             printf("%s: %s\n", ce->name, strerror(errno));
@@ -218,7 +227,7 @@ int main(int argc, char **argv)
         }
 
         /*
-         * Compare metadata stored in the cache entry to the of the 
+         * Compare the metadata stored in the cache entry to those of the 
          * corresponding working file to check if they are the same or if
          * anything changed. 
          */
@@ -226,18 +235,18 @@ int main(int argc, char **argv)
 
         /*
          * If no metadata changed, display an ok message and continue to the 
-         * next cache entry in active cache. 
+         * next cache entry in the active_cache array. 
          */
         if (!changed) {
             printf("%s: ok\n", ce->name);
             continue;
         }
 
-        /* Drop here if any metadata changed. */
+        /* Fall through here if any metadata changed. */
 
         /*
          * Display the path of the file corresponding to the current cache
-         * entry and the length of the path. 
+         * entry.
          */
         printf("%.*s:  ", ce->namelen, ce->name);
 
@@ -253,8 +262,8 @@ int main(int argc, char **argv)
         /*
          * Read the blob object from the object store using its SHA1 hash,
          * inflate it, and return a pointer to the object data (without the 
-         * prepended metadata). Store the object type and data size in `type` 
-         * and `size` respectively.
+         * prepended metadata). Store the object type and object data size in 
+         * `type` and `size` respectively.
          */
         new = read_sha1_file(ce->sha1, type, &size);
 
