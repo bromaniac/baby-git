@@ -1,13 +1,14 @@
 #!/bin/sh
-# Script for a sample baby-git workflow.
+# Script for a sample Baby-Git workflow.
+#
+# Synopsis:
+#
+# ./babygit
 
 CACHE_DIR=.dircache
 TEXT_FILE1="myfile1.txt"
 TEXT_FILE2="myfile2.txt"
 CHANGE_LOG=changelog
-
-#output="$(cat ${TEXT_FILE1})"
-#printf ${output}
 
 if [ -d ${CACHE_DIR} ]
 then
@@ -25,7 +26,6 @@ update-cache ${TEXT_FILE2}
 
 printf "*** Writing current tree ***\n"
 tree_sha=$(write-tree)
-#printf ${tree_sha}
 
 printf "\n*** Committing current tree ***\n"
 commit_sha=$(commit-tree ${tree_sha} < ${CHANGE_LOG} | sed -n '$p' )
@@ -38,7 +38,6 @@ cat ${commit}
 printf "\n*** Reading current tree ***\n"
 blobs=$(read-tree ${tree_sha} | sed 's/ /_/gp')
 blobs=$(echo ${blobs} | sed 's/ /_/gp')
-#printf ${blobs}
 
 printf "*** Displaying file contents ***\n"
 for file in ${TEXT_FILE1} ${TEXT_FILE2}
@@ -57,7 +56,7 @@ do
     cat ${contents}
 done
 
-printf "\n*** Getting diff between current tree and current files ***\n"
+printf "\n*** Getting diff between cached objects and current files ***\n"
 show-diff
 
 # End script
