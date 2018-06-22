@@ -34,43 +34,43 @@
  */
 
 #include "cache.h"
+/* The above 'include' allows use of the following functions and
+   variables from "cache.h" header file, ranked in order of first use
+   in this file. Most are functions/macros from standard C libraries
+   that are `#included` in "cache.h". Function names are followed by
+   parenthesis whereas variable/struct names are not:
 
-/*  The above 'include' allows use of the following functions and
-    variables from <cache.h> header file, ranked in order of first use
-    in this file. Most are functions/macros from standard C libraries
-    that are `#included` in <cache.h>. Function names are followed by
-    parenthesis whereas variable/struct names are not:
+   -snprintf(char *s, size_t n, const char *format, ...):
+        Write the formatted string `format` into `s`, with `n` specifying the 
+        maximum number of characters that should be written to `s`, including 
+        the null terminating character.
 
-	-snprintf(s, n, f): Add `n` bytes of format string `f` to memory
-                        location identified by `s`. Sourced from <stdio.h>.
+   -popen(command, mode): Create a pipe between the calling program and a 
+                          shell command and return a pointer to a stream that 
+                          enables read or write access to the command 
+                          depending on the value of mode. Sourced from 
+                          <stdio.h>.
 
-    -popen(command, mode): Execute the command specified by the string `command`.
-                           It shall create a pipe between the calling program and
-                           the executed command, and shall return a pointer to a
-                           stream that can be used to either read from or write to
-                           the pipe, depending on the value of `mode`. Sourced from
-						   <stdio.h>.
+   -fwrite(data, size, nitems, stream): Write up to `nitems`, each of size 
+                                        `size`, from array `data` to `stream`.
+                                        Sourced from <stdio.h>.
 
-    -fwrite(ptr, size, nitems, stream): Write, from the array pointed to by ptr,
-                                        up to nitems elements whose size is specified
-                                        by size, to the stream pointed to by stream.
-										Sourced from <stdio.h>.
+   -pclose(stream): Close a stream that was opened by popen(). Sourced from 
+                    <stdio.h>.
 
-    -pclose(stream): Close a stream that was opened by popen(). Sourced from <stdio.h>.
+   -read_cache(): Reads the contents of the `.dircache/index` file into the 
+                  `active_cache` array. 
 
-	-read_cache(): Read in the contents of the `.dircache/index` file into
-                   the `active_cache`. The number of caches entries is returned.
+   -printf(message, ...): Write `message` to standard output stream stdout.  
+                          Sourced from <stdio.h>.
 
-    -printf(message): Print message to standard output stdout.
-                      Sourced from <stdio.h>.
-
-	-free(ptr): Cause the space pointed to by `ptr` to be deallocated. Sourced from <stdlib.h>.
-
+   -free(ptr): Deallocates the space pointed to by `ptr`. Sourced from 
+               <stdlib.h>.
 */
 
-#define MTIME_CHANGED	0x0001
-#define CTIME_CHANGED	0x0002
-#define OWNER_CHANGED	0x0004
+#define MTIME_CHANGED   0x0001
+#define CTIME_CHANGED   0x0002
+#define OWNER_CHANGED   0x0004
 #define MODE_CHANGED    0x0008
 #define INODE_CHANGED   0x0010
 #define DATA_CHANGED    0x0020
@@ -78,159 +78,204 @@
 /*
  * Function: `match_stat`
  * Parameters:
- *      -ce: The cache entry to compare contents of to the file in the working directory.
- *		-st: The stat object of the working directory file to compare to the cached version.
- * Purpose: To check whether a previously staged file has been changed in the working directory.
+ *      -ce: Pointer to a cache entry structure.
+ *      -st: Pointer to a stat structure containing metadata of the working 
+ *           file that corresponds to the cache entry. 
+ * Purpose: Compare metadata stored in a cache entry to the metadata of the 
+ *          corresponding working file to check if they are the same or if
+ *          anything changed.
  */
 static int match_stat(struct cache_entry *ce, struct stat *st)
 {
-    /* This is used to track whether the cached file matches the current file in the working directory. */
-	unsigned int changed = 0;
+    /* Flag to indicate which file metadata changed, if any. */
+    unsigned int changed = 0;
 
-    /* Compare each cached file parameter to those in working directory file, to determine whether files match.  */
-        if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
-            ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
-                changed |= MTIME_CHANGED;
-        if (ce->ctime.sec  != (unsigned int)STAT_TIME_SEC( st, st_ctim ) ||
-            ce->ctime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_ctim ))
-                changed |= CTIME_CHANGED;
+    /*
+     * Compare metadata stored in a cache entry to those of the corresponding
+     * working file to check if they are the same.
+     */
 
-	if (ce->st_uid != (unsigned int)st->st_uid ||
-	    ce->st_gid != (unsigned int)st->st_gid)
-		changed |= OWNER_CHANGED;
-	if (ce->st_mode != (unsigned int)st->st_mode)
-		changed |= MODE_CHANGED;
-        #ifndef BGIT_WINDOWS
-	if (ce->st_dev != (unsigned int)st->st_dev ||
-	    ce->st_ino != (unsigned int)st->st_ino)
-		changed |= INODE_CHANGED;
-        #endif
-	if (ce->st_size != (unsigned int)st->st_size)
-		changed |= DATA_CHANGED;
-	return changed;
+    /* Check last modification time. */
+    if (ce->mtime.sec  != (unsigned int)STAT_TIME_SEC( st, st_mtim ) ||
+        ce->mtime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_mtim ))
+            changed |= MTIME_CHANGED;
+    /* Check time of last status change. */
+    if (ce->ctime.sec  != (unsigned int)STAT_TIME_SEC( st, st_ctim ) ||
+        ce->ctime.nsec != (unsigned int)STAT_TIME_NSEC( st, st_ctim ))
+            changed |= CTIME_CHANGED;
+
+    /* Check file user ID and group ID. */
+    if (ce->st_uid != (unsigned int)st->st_uid ||
+        ce->st_gid != (unsigned int)st->st_gid)
+        changed |= OWNER_CHANGED;
+    /* Check file mode. */
+    if (ce->st_mode != (unsigned int)st->st_mode)
+        changed |= MODE_CHANGED;
+    #ifndef BGIT_WINDOWS
+    /* Check device ID and file inode number. */
+    if (ce->st_dev != (unsigned int)st->st_dev ||
+        ce->st_ino != (unsigned int)st->st_ino)
+        changed |= INODE_CHANGED;
+    #endif
+    /* Check file size. */
+    if (ce->st_size != (unsigned int)st->st_size)
+        changed |= DATA_CHANGED;
+    return changed;
 }
 
 /*
  * Function: `show_differences`
  * Parameters:
- *      -ce: The cache entry to compare contents of to the file in the working directory.
- *      -st: The stat object of the working directory file to compare to the cached version.
- * Purpose: Generate the diff between the staged version of the file and the version in the
- * 			working directory.
+ *      -ce: Pointer to a cache entry structure.
+ *      -cur: Pointer to a stat structure containing metadata of the working 
+ *            file that corresponds to the cache entry. 
+ *      -old_contents: The blob data corresponding to the cache entry.
+ *      -old_size: The size of the blob data in bytes.
+ * Purpose: Use the diff shell command to display the differences between the 
+ *          blob data corresponding to the cache entry and the contents of the 
+ *          corresponding working file.
  */
 static void show_differences(struct cache_entry *ce, struct stat *cur,
-	void *old_contents, unsigned long long old_size)
+                             void *old_contents, unsigned long long old_size)
 {
-    /* String to store the diff command which will be built up using the file name. */
-	static char cmd[1000];
+    static char cmd[1000];   /* String to store the diff command. */
+    FILE *f;                 /* Declare a file pointer. */
 
-    /* Declare a FILE object. */
-	FILE *f;
+    /*
+     * Construct the diff command for this cache entry, which will be used to 
+     * display the differences between the blob data corresponding to the
+     * cache entry and the contents of the corresponding working file.
+     * Store the command string in `cmd`. 
+     */
+    snprintf(cmd, sizeof(cmd), "diff --strip-trailing-cr -u - %s", ce->name);
 
-    /* Build up the diff command and store it in `cmd`. */
-	snprintf(cmd, sizeof(cmd), "diff --strip-trailing-cr -u - %s", ce->name);
+    /*
+     * Create a pipe to the diff command and return a pointer to the
+     * corresponding stream for writing. 
+     */
+    f = popen(cmd, "w");
 
-    /* Run the diff command and return as `f` pointer to open stream. */
-	f = popen(cmd, "w");
+    /*
+     * Write the blob object data corresponding to the current cache entry to 
+     * the command stream to complete the command, thus effectively executing 
+     * the diff command.
+     */
+    fwrite(old_contents, old_size, 1, f);
 
-    /* Write `old_contents` to the open stream referred to by `f`. */
-	fwrite(old_contents, old_size, 1, f);
-
-    /* Close the stream. */
-	pclose(f);
+    /* Close the command stream. */
+    pclose(f);
 }
 
 /*
  * Function: `main`
  * Parameters:
- *      -argc: The number of command-line arguments supplied, inluding the command itself. 
- *      -argv: An array of the command line arguments, including the command itself.
- * Purpose: Standard `main` function definition. Runs when the executable `show-diff` is
- *          run from the command line. 
+ *      -argc: The number of command-line arguments supplied, inluding the 
+ *             command itself. 
+ *      -argv: An array of the command line arguments, including the command 
+ *             itself.
+ * Purpose: Standard `main` function definition. Runs when the executable 
+ *          `show-diff` is run from the command line. 
  */
 int main(int argc, char **argv)
 {
-	/*  
-     * Read in the contents of the `.dircache/index` file into the `active_cache`.
-     * The number of caches entries is stored in `entries`.
+    /*
+     * Reads the contents of the `.dircache/index` file into the 
+     * `active_cache` array and returns the number of cache entries.
      */
-	int entries = read_cache();
+    int entries = read_cache();
 
-	/* For loop counter. */
-	int i;
+    /* For loop counter. */
+    int i;
 
-	/*  
-     * If there are no active cache entries, throw an error message since there is
-     * nothing staged in the index to commit.
+    /*
+     * If there was an error reading the cache, display an error message and 
+     * exit. 
      */
-	if (entries < 0) {
-		perror("read_cache");
-		exit(1);
-	}
+    if (entries < 0) {
+        perror("read_cache");
+        exit(1);
+    }
 
-	/* Iterate through of cache entries in the active cache. */
-	for (i = 0; i < entries; i++) {
+    /* Loop through the cache entries in the active_cache array. */
+    for (i = 0; i < entries; i++) {
+        /* Declare a stat structure to store file metadata. */
+        struct stat st;
+        /* The current cache entry. */
+        struct cache_entry *ce = active_cache[i];
+        /* For loop counter. */
+        int n;
+        /* Flag to indicate which file metadata changed, if any. */
+        int changed;
+        /* Not used. */
+        unsigned int mode;
+        /* Blob object data size. */
+        unsigned long size;
+        /* Used to store the object type (blob in this case ). */
+        char type[20];
+        /* Used to store the blob object data. */
+        void *new;
 
-		/* Declare stat to store file metadata. */
-		struct stat st;
+        /*
+         * Use the stat() function to obtain information about the working 
+         * file corresponding to the current cache entry and store it in the 
+         * `st` stat structure. If the stat() call fails, display an error
+         * message and continue to the next cache entry.
+         */
+        if (stat(ce->name, &st) < 0) {
+            printf("%s: %s\n", ce->name, strerror(errno));
+            continue;
+        }
 
-		/* Pick out the ith cache_entry inthe active cache. */
-		struct cache_entry *ce = active_cache[i];
+        /*
+         * Compare the metadata stored in the cache entry to those of the 
+         * corresponding working file to check if they are the same or if
+         * anything changed. 
+         */
+        changed = match_stat(ce, &st);
 
-		/* For loop counter. */
-		int n;
+        /*
+         * If no metadata changed, display an ok message and continue to the 
+         * next cache entry in the active_cache array. 
+         */
+        if (!changed) {
+            printf("%s: ok\n", ce->name);
+            continue;
+        }
 
-		/* Used to specify whether working directory file has changed from cached version. */
-		int changed;
+        /* Fall through here if any metadata changed. */
 
-		/* File mode (permissions). */
-		unsigned int mode;
+        /*
+         * Display the path of the file corresponding to the current cache
+         * entry.
+         */
+        printf("%.*s:  ", ce->namelen, ce->name);
 
-		/* File size. */
-		unsigned long size;
+        /*
+         * Display the hexadicimal representation of the SHA1 hash of the blob 
+         * object corresponding to the current cache entry. 
+         */
+        for (n = 0; n < 20; n++)
+            printf("%02x", ce->sha1[n]);
 
-		/* Used to store the `type` of the working directory file (`blob` or `tree`). */
-		char type[20];
+        printf("\n");   /* Print a newline. */
 
-		/* Used to store content of working directory file. */
-		void *new;
+        /*
+         * Read the blob object from the object store using its SHA1 hash,
+         * inflate it, and return a pointer to the object data (without the 
+         * prepended metadata). Store the object type and object data size in 
+         * `type` and `size` respectively.
+         */
+        new = read_sha1_file(ce->sha1, type, &size);
 
-		/*
-		 * Print error message if the cached file no longer exists in the working directory.
-		 * Move on to next cache entry in the active cache.
-		 */
-		if (stat(ce->name, &st) < 0) {
-			printf("%s: %s\n", ce->name, strerror(errno));
-			continue;
-		}
+        /*
+         * Use the diff shell command to display the differences between the 
+         * blob data corresponding to the current cache entry and the contents 
+         * of the corresponding working file.
+         */
+        show_differences(ce, &st, new, size);
 
-		/* Determine whether or not the working directory file is different from cached version. */
-		changed = match_stat(ce, &st);
-
-		/* If not changed, print OK message and move on to next cache entry in active cache. */
-		if (!changed) {
-			printf("%s: ok\n", ce->name);
-			continue;
-		}
-
-		/* Print out the name of the changed file and it's length. */
-		printf("%.*s:  ", ce->namelen, ce->name);
-
-		/* Print out the SHA1 of the changed file. */
-		for (n = 0; n < 20; n++)
-			printf("%02x", ce->sha1[n]);
-
-		/* Print a newline. */
-		printf("\n");
-
-		/* Read in the working directory file contents. */
-		new = read_sha1_file(ce->sha1, type, &size);
-
-		/* Compare the cache entry to the working directory version of the file. */
-		show_differences(ce, &st, new, size);
-
-		/* Free up the memory used by `new`. */
-		free(new);
-	}
-	return 0;
+        /* Deallocate the space pointed to by `new`. */
+        free(new);
+    }
+    return 0;
 }
