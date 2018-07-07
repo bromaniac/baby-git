@@ -234,8 +234,8 @@
 
    -verify_hdr(): Validate a cache header.
 
-   -read_cache(): Reads the contents of the `.dircache/index` file into the 
-                  `active_cache` array.
+   -read_cache(): Reads the cache entries in the `.dircache/index` file into 
+                  the `active_cache` array.
 */
 
 /* Used to store the path to the object store. */
@@ -709,7 +709,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 /*
  * Function: `read_cache`
  * Parameters: none
- * Purpose: Reads the contents of the `.dircache/index` file into the 
+ * Purpose: Reads the cache entries in the `.dircache/index` file into the 
   8         `active_cache` array.
  */
 int read_cache(void)
