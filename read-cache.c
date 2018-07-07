@@ -669,8 +669,8 @@ static int error(const char * string)
 /*
  * Function: `verify_header`
  * Parameters:
- *      -hdr: A pointer to the cache_header to validate.
- *      -size: The size in bytes of the cache_header.
+ *      -hdr: A pointer to the cache header structure to validate.
+ *      -size: The size in bytes of the cache file.
  * Purpose: Validate a cache_header.
  */
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
