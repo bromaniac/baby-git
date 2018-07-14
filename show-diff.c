@@ -251,7 +251,7 @@ int main(int argc, char **argv)
         printf("%.*s:  ", ce->namelen, ce->name);
 
         /*
-         * Display the hexadicimal representation of the SHA1 hash of the blob 
+         * Display the hexadecimal representation of the SHA1 hash of the blob 
          * object corresponding to the current cache entry. 
          */
         for (n = 0; n < 20; n++)

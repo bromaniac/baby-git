@@ -88,7 +88,7 @@
 
    -strlen(string): Return the length of `string` in bytes.
 
-   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+   -get_sha1_hex(): Convert a 40-character hexadecimal representation of an 
                     SHA1 hash value to the equivalent 20-byte representation.
 
    -usage(): Print an error message and exit.
@@ -119,7 +119,7 @@
                   <stdlib.h>.
 
    -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
-                   the equivalent 40-character hexadicimal representation.
+                   the equivalent 40-character hexadecimal representation.
 
    -fgets(char *s, int n, FILE *stream):
         Read bytes from `stream` into the array pointed to by `s`, until `n`-1
