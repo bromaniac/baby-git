@@ -92,7 +92,7 @@
 /* This `CACHE_SIGNATURE` is hardcoded to be loaded into all cache headers. */
 #define CACHE_SIGNATURE 0x44495243   /* Linus Torvalds: "DIRC" */
 
-/* Template of the header structure that identifes a set of cache entries. */
+/* Template of the header structure that identifies a set of cache entries. */
 struct cache_header {
     /* Constant across all headers, to validate authenticity. */
     unsigned int signature; 

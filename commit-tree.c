@@ -526,7 +526,7 @@ int main(int argc, char **argv)
     add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
 
     /*
-     * For each pareent commit SHA1 hash, add the string 'parent ' and the
+     * For each parent commit SHA1 hash, add the string 'parent ' and the
      * hash to the buffer.
      *
      * Linus Torvalds: NOTE! This ordering means that the same exact tree 

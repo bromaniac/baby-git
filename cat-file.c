@@ -143,7 +143,7 @@ int main(int argc, char **argv)
     /*
      * Modify `template` to generate a unique filename, then open the file for 
      * reading and writing and return a file descriptor for the file. The 
-     * `XXXXXX` in the template is relaced with a randomly generated 
+     * `XXXXXX` in the template is replaced with a randomly generated 
      * alphanumeric string to generate a unique filename.
      */
     fd = mkstemp(template);
