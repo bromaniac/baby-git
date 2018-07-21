@@ -210,11 +210,11 @@
 
    -hexval(): Convert a hexadecimal symbol to its decimal equivalent.
 
-   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+   -get_sha1_hex(): Convert a 40-character hexadecimal representation of an 
                     SHA1 hash value to the equivalent 20-byte representation.
 
    -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
-                   the equivalent 40-character hexadicimal representation.
+                   the equivalent 40-character hexadecimal representation.
 
    -sha1_file_name(): Build the path of an object in the object database
                       using the object's SHA1 hash value.
@@ -234,8 +234,8 @@
 
    -verify_hdr(): Validate a cache header.
 
-   -read_cache(): Reads the contents of the `.dircache/index` file into the 
-                  `active_cache` array.
+   -read_cache(): Reads the cache entries in the `.dircache/index` file into 
+                  the `active_cache` array.
 */
 
 /* Used to store the path to the object store. */
@@ -283,7 +283,7 @@ static unsigned hexval(char c)
         return c - 'A' + 10;
 
     /*
-     * If `c` is not a valid hexadicimal symbol, return the one's complement 
+     * If `c` is not a valid hexadecimal symbol, return the one's complement 
      * of 0. 
      */
     return ~0;
@@ -296,7 +296,7 @@ static unsigned hexval(char c)
               value.
  *      -sha1: Array for storing the 20-byte representation of the SHA1 hash
  *             value.
- * Purpose: Convert a 40-character hexadicimal representation of an SHA1 hash 
+ * Purpose: Convert a 40-character hexadecimal representation of an SHA1 hash 
  *          value to the equivalent 20-byte representation.
  */
 int get_sha1_hex(char *hex, unsigned char *sha1)
@@ -317,7 +317,7 @@ int get_sha1_hex(char *hex, unsigned char *sha1)
         if (val & ~0xff)
             return -1;
         *sha1++ = val;   /* Store val in sha1 array. */
-        hex += 2;        /* Get next two-diget hexadiceimal number. */
+        hex += 2;        /* Get next two-digit hexadecimal number. */
     }
     return 0;
 }
@@ -327,11 +327,11 @@ int get_sha1_hex(char *hex, unsigned char *sha1)
  * Parameters:
  *      -sha1: Array containing 20-byte representation of an SHA1 hash value.
  * Purpose: Convert a 20-byte representation of an SHA1 hash value to the
- *          equivalent 40-character hexadicimal representation.
+ *          equivalent 40-character hexadecimal representation.
  */
 char *sha1_to_hex(unsigned char *sha1)
 {
-    /* String for storing the 40-character hexadicimal representation. */
+    /* String for storing the 40-character hexadecimal representation. */
     static char buffer[50];
     /*
      * Lookup array for getting the hexadecimal representation of a number
@@ -669,8 +669,8 @@ static int error(const char * string)
 /*
  * Function: `verify_header`
  * Parameters:
- *      -hdr: A pointer to the cache_header to validate.
- *      -size: The size in bytes of the cache_header.
+ *      -hdr: A pointer to the cache header structure to validate.
+ *      -size: The size in bytes of the cache file.
  * Purpose: Validate a cache_header.
  */
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
@@ -709,7 +709,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 /*
  * Function: `read_cache`
  * Parameters: none
- * Purpose: Reads the contents of the `.dircache/index` file into the 
+ * Purpose: Reads the cache entries in the `.dircache/index` file into the 
   8         `active_cache` array.
  */
 int read_cache(void)

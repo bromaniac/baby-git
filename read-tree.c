@@ -74,9 +74,9 @@
    -usage(): Print an error message and exit. 
 
    -sha1_to_hex(): Convert a 20-byte representation of an SHA1 hash value to 
-                   the equivalent 40-character hexadicimal representation.
+                   the equivalent 40-character hexadecimal representation.
 
-   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+   -get_sha1_hex(): Convert a 40-character hexadecimal representation of an 
                     SHA1 hash value to the equivalent 20-byte representation.
 
    -read_sha1_file(): Locate an object in the object database, read and 
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
         usage("read-tree <key>");
 
     /* 
-     * Convert the given 40-character hexadicimal representation of an SHA1 
+     * Convert the given 40-character hexadecimal representation of an SHA1 
      * hash value to the equivalent 20-byte representation. If conversion 
      * fails (for example, if the hexadecimal representation has a character 
      * outside the valid hexadecimal range of 0-9, a-f, or A-F), print usage 

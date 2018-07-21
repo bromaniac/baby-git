@@ -259,24 +259,24 @@
 static int cache_name_compare(const char *name1, int len1, const char *name2, 
                               int len2)
 {
-    int len = len1 < len2 ? len1 : len2;
+    int len = len1 < len2 ? len1 : len2;   /* len is the shorter length. */
     int cmp;
 
     cmp = memcmp(name1, name2, len);
-    if (cmp)
+    if (cmp)           /* First len characters are different. */
         return cmp;
-    if (len1 < len2)
+    if (len1 < len2)   /* First len characters are the same. */
         return -1;
-    if (len1 > len2)
+    if (len1 > len2)   /* First len characters are the same. */
         return 1;
-    return 0;
+    return 0;          /* Exact match. */
 }
 
 /*
  * Function: `cache_name_pos`
  * Parameters:
- *      -name: The name of the file to be cached.
- *      -namelen: Then length of the name.
+ *      -name: The path of the file to be cached.
+ *      -namelen: The length of the path.
  * Purpose: Determine the lexicographic position of a cache entry in the
  *          active_cache array.
  */
@@ -292,10 +292,10 @@ static int cache_name_pos(const char *name, int namelen)
      * cache entry in the active_cache array.
      */
     while (last > first) {
-        int next = (last + first) >> 1;
+        int next = (last + first) >> 1;   /* Division by 2. */
         struct cache_entry *ce = active_cache[next];
         int cmp = cache_name_compare(name, namelen, ce->name, ce->namelen);
-        if (!cmp)
+        if (!cmp)            /* Exact match found. */
             return -next-1;
         if (cmp < 0) {
             last = next;
@@ -315,7 +315,7 @@ static int cache_name_pos(const char *name, int namelen)
 static int remove_file_from_cache(char *path)
 {
     int pos = cache_name_pos(path, strlen(path));
-    if (pos < 0) {
+    if (pos < 0) {   /* If exact match found. */
         pos = -pos-1;
         active_nr--;
         if (pos < active_nr)

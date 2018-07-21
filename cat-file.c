@@ -43,7 +43,7 @@
    that are `#included` in "cache.h". Function names are followed by
    parenthesis whereas variable/struct names are not:
 
-   -get_sha1_hex(): Convert a 40-character hexadicimal representation of an 
+   -get_sha1_hex(): Convert a 40-character hexadecimal representation of an 
                     SHA1 hash value to the equivalent 20-byte representation.
 
    -usage(): Print an error message and exit.
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 
     /*  
      * Validate the number of command line arguments and convert the given 
-     * 40-character hexadicimal representation of an SHA1 hash value to the 
+     * 40-character hexadecimal representation of an SHA1 hash value to the 
      * equivalent 20-byte representation. If either one fails, display usage
      * and exit.
      */
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
     /*
      * Modify `template` to generate a unique filename, then open the file for 
      * reading and writing and return a file descriptor for the file. The 
-     * `XXXXXX` in the template is relaced with a randomly generated 
+     * `XXXXXX` in the template is replaced with a randomly generated 
      * alphanumeric string to generate a unique filename.
      */
     fd = mkstemp(template);
