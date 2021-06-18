@@ -149,13 +149,13 @@ struct cache_entry {
  */
 
 /* The path to the object store. */
-const char *sha1_file_directory; 
+extern const char *sha1_file_directory; 
 /* An array of pointers to cache entries. */
-struct cache_entry **active_cache; 
+extern struct cache_entry **active_cache; 
 /* The number of entries in the `active_cache` array. */
-unsigned int active_nr; 
+extern unsigned int active_nr; 
 /* The maximum number of elements the active_cache array can hold. */
-unsigned int active_alloc; 
+extern unsigned int active_alloc; 
 
 /*
  * If desired, you can use an environment variable to set a custom path to the
